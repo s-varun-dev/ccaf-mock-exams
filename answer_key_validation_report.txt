@@ -1,0 +1,97 @@
+CCAF mock exam bank - answer-key validation report
+Generated: 2026-10-24 11:35
+Source: data/question_bank.json (300 questions)
+Automated results: 65 checks, 0 failures, 0 warnings
+
+[PASS] Total questions == 300 - found 300
+[PASS] No duplicate question IDs
+[PASS] Paper 1 has exactly 60 questions - found 60
+[PASS] Paper 1 numbering is contiguous 1..60
+[PASS] Paper 1 IDs match numbering
+[PASS] Paper 1 primary-domain allocation 16/11/12/12/9 - {1: 16, 2: 11, 3: 12, 4: 12, 5: 9}
+[PASS] Paper 1 uses exactly four scenarios - [1, 2, 3, 4]
+[PASS] Paper 1 scenario sizes within 13-17 - {1: 17, 2: 14, 3: 16, 4: 13}
+[PASS] Paper 1 scenario groups are contiguous blocks
+[PASS] Paper 1 response mix recorded - {'S': 54, 'M2': 5, 'M3': 1}
+       difficulty mix F/I/C = 13/32/15 (design target 12/33/15)
+[PASS] Paper 1 single-answer position balance (max-min <= 2) - {'A': 14, 'B': 14, 'C': 13, 'D': 13}
+       multi-response correct-letter counts: {'A': 3, 'B': 5, 'C': 3, 'D': 1, 'F': 1}
+       correct option is (tied-)longest in 11/54 single-answer items (chance ~25%)
+[PASS] Paper 2 has exactly 60 questions - found 60
+[PASS] Paper 2 numbering is contiguous 1..60
+[PASS] Paper 2 IDs match numbering
+[PASS] Paper 2 primary-domain allocation 16/11/12/12/9 - {1: 16, 2: 11, 3: 12, 4: 12, 5: 9}
+[PASS] Paper 2 uses exactly four scenarios - [1, 2, 5, 6]
+[PASS] Paper 2 scenario sizes within 13-17 - {1: 15, 2: 16, 5: 14, 6: 15}
+[PASS] Paper 2 scenario groups are contiguous blocks
+[PASS] Paper 2 response mix recorded - {'S': 54, 'M3': 1, 'M2': 5}
+       difficulty mix F/I/C = 12/33/15 (design target 12/33/15)
+[PASS] Paper 2 single-answer position balance (max-min <= 2) - {'A': 14, 'B': 14, 'C': 13, 'D': 13}
+       multi-response correct-letter counts: {'A': 2, 'B': 3, 'C': 1, 'D': 4, 'E': 3}
+       correct option is (tied-)longest in 18/54 single-answer items (chance ~25%)
+[PASS] Paper 3 has exactly 60 questions - found 60
+[PASS] Paper 3 numbering is contiguous 1..60
+[PASS] Paper 3 IDs match numbering
+[PASS] Paper 3 primary-domain allocation 16/11/12/12/9 - {1: 16, 2: 11, 3: 12, 4: 12, 5: 9}
+[PASS] Paper 3 uses exactly four scenarios - [3, 4, 5, 6]
+[PASS] Paper 3 scenario sizes within 13-17 - {3: 15, 4: 17, 5: 15, 6: 13}
+[PASS] Paper 3 scenario groups are contiguous blocks
+[PASS] Paper 3 response mix recorded - {'S': 54, 'M2': 5, 'M3': 1}
+       difficulty mix F/I/C = 12/33/15 (design target 12/33/15)
+[PASS] Paper 3 single-answer position balance (max-min <= 2) - {'A': 14, 'B': 14, 'C': 13, 'D': 13}
+       multi-response correct-letter counts: {'A': 1, 'B': 1, 'C': 3, 'D': 4, 'E': 4}
+       correct option is (tied-)longest in 20/54 single-answer items (chance ~25%)
+[PASS] Paper 4 has exactly 60 questions - found 60
+[PASS] Paper 4 numbering is contiguous 1..60
+[PASS] Paper 4 IDs match numbering
+[PASS] Paper 4 primary-domain allocation 16/11/12/12/9 - {1: 16, 2: 11, 3: 12, 4: 12, 5: 9}
+[PASS] Paper 4 uses exactly four scenarios - [1, 2, 4, 6]
+[PASS] Paper 4 scenario sizes within 13-17 - {1: 15, 2: 13, 4: 15, 6: 17}
+[PASS] Paper 4 scenario groups are contiguous blocks
+[PASS] Paper 4 response mix recorded - {'S': 54, 'M2': 5, 'M3': 1}
+       difficulty mix F/I/C = 12/33/15 (design target 12/33/15)
+[PASS] Paper 4 single-answer position balance (max-min <= 2) - {'A': 14, 'B': 14, 'C': 13, 'D': 13}
+       multi-response correct-letter counts: {'A': 1, 'B': 4, 'C': 2, 'D': 2, 'E': 3, 'F': 1}
+       correct option is (tied-)longest in 22/54 single-answer items (chance ~25%)
+[PASS] Paper 5 has exactly 60 questions - found 60
+[PASS] Paper 5 numbering is contiguous 1..60
+[PASS] Paper 5 IDs match numbering
+[PASS] Paper 5 primary-domain allocation 16/11/12/12/9 - {1: 16, 2: 11, 3: 12, 4: 12, 5: 9}
+[PASS] Paper 5 uses exactly four scenarios - [2, 3, 5, 6]
+[PASS] Paper 5 scenario sizes within 13-17 - {2: 13, 3: 16, 5: 14, 6: 17}
+[PASS] Paper 5 scenario groups are contiguous blocks
+[PASS] Paper 5 response mix recorded - {'S': 54, 'M2': 5, 'M3': 1}
+       difficulty mix F/I/C = 12/33/15 (design target 12/33/15)
+[PASS] Paper 5 single-answer position balance (max-min <= 2) - {'A': 14, 'B': 14, 'C': 13, 'D': 13}
+       multi-response correct-letter counts: {'A': 6, 'B': 1, 'C': 2, 'D': 1, 'E': 2, 'F': 1}
+       correct option is (tied-)longest in 16/54 single-answer items (chance ~25%)
+[PASS] All questions: no 'option count' defects
+[PASS] All questions: no 'letters' defects
+[PASS] All questions: no 'correct count' defects
+[PASS] All questions: no 'key mismatch' defects
+[PASS] All questions: no 'missing/short option explanation' defects
+[PASS] All questions: no 'short option' defects
+[PASS] All questions: no 'all/none of the above' defects
+[PASS] All questions: no 'letter reference in explanation' defects
+[PASS] All questions: no 'duplicate option text' defects
+[PASS] All questions: no 'answer leak in stem' defects
+[PASS] All questions: no 'non-ASCII characters' defects
+[PASS] All questions: no 'task/domain mismatch' defects
+[PASS] Every question has a verified-correct key letter set recorded
+[PASS] Multiple-response stems state the required count in words (TWO/THREE)
+[PASS] No near-duplicate stems across the 300 questions (Jaccard >= 0.55)
+[PASS] No duplicated correct-option text across questions (Jaccard >= 0.75)
+[PASS] Each scenario assessed in at least 3 papers - {1: 3, 2: 4, 3: 3, 4: 3, 5: 3, 6: 4}
+Scenario assignment by paper: P1=[1, 2, 3, 4]; P2=[1, 2, 5, 6]; P3=[3, 4, 5, 6]; P4=[1, 2, 4, 6]; P5=[2, 3, 5, 6]
+[PASS] All 31 official task statements are assessed at least once - missing: []
+Questions per task statement: 1.1=10, 1.2=11, 1.3=11, 1.4=7, 1.5=14, 1.6=16, 1.7=11, 2.1=11, 2.2=12, 2.3=12, 2.4=12, 2.5=8, 3.1=9, 3.2=11, 3.3=9, 3.4=10, 3.5=10, 3.6=11, 4.1=8, 4.2=12, 4.3=10, 4.4=11, 4.5=11, 4.6=8, 5.1=8, 5.2=7, 5.3=6, 5.4=9, 5.5=8, 5.6=7
+Min/max per task statement: 6 / 16
+Verification status counts: {'independent review: no defects found': 269, 'revised after independent review': 31}
+
+
+---- Substantive review notes ----
+Independent review pass: five read-only reviewer agents (one per paper) read all 300 items and reported 6-7 items per paper (no HIGH-severity findings). Reviewers checked single best answer / exact select-count, technical claims, option explanations vs keys, stem ambiguity, length tells.
+Caveat: most reviewers checked against their knowledge of Claude API / Agent SDK / Claude Code / MCP rather than re-reading the whole official guide; keys were separately authored against the guide text (source/official_exam_guide.txt).
+Fixes applied: P2-Q12 mismatched length-patch corrected; P2-Q50/Q52 distractors rewritten; P2-Q27/P1-Q26 'prompts for' wording softened to 'shows the expected argument'; P1-Q02 hook term; P1-Q41 distractor/explanation; P1-Q09 explanation; P3-Q17 task labels 1-4; P3-Q23 rules paths wording; P3-Q30 and Q52 distractors; P3-Q39 stem constraint and distractor; P3-Q49 atomic uniqueness; P4-Q02/Q08/Q20/Q21/Q23/Q39/Q53 stems/options; P5-Q12/Q16/Q37/Q38/Q43/Q58 wording and distractors.
+Known residual points accepted: some paired items share a concept across angles (e.g. P1 Q3/Q36 loop termination, Q30/Q60 manifests); Task tool is named per the official guide (newer SDKs may call it Agent); P5-Q36/Q37/Q38 and P4-Q35 are flagged supplemental.
+Difficulty labels are design-time estimates, not psychometric.

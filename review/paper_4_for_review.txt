@@ -1,0 +1,793 @@
+=== P4-Q01 | S1 | D1 | task 1.4 | I | select 1 ===
+STEM: Audit logs show some process_refund calls where the agent supplied an order ID and amount that it never retrieved with lookup_order, for example amounts copied from the customer's message. Some refunds exceeded what the order allowed. Which control best prevents this class of error?
+  A. A requirement that the agent writes a short justification for each refund in the tool call, which a reviewer can read in the logs the following day.
+  B. A gate that rejects process_refund unless a successful lookup_order result for that order ID exists in the session and the amount is within the refundable balance.
+  C. A system prompt rule instructing the agent to look up the order, confirm the amount with the customer in the conversation, and only then issue the refund through the tool.
+  D. A lower per-call maximum for process_refund so that any single mistaken amount stays small, with retries allowed when the refund is below the limit.
+KEY: B
+WHY: A prerequisite gate in code can check not only that a prior step happened but that its result supports the requested action: here a real order lookup and an amount within the refundable balance. This provides deterministic compliance where prompt instructions have a non-zero failure rate.
+  expl A [no]: A justification is read after the money has moved and does not prevent over-refunds.
+  expl B [OK]: Correct. It ties the side effect to verified data and enforces the limit in code.
+  expl C [no]: A prompt rule is followed probabilistically, and the confirmed amount may still be wrong.
+  expl D [no]: A cap limits damage per call but does not verify the order or the balance, and retries can add up.
+
+=== P4-Q02 | S1 | D1 | task 1.4 | C | select 1 ===
+STEM: A team adds few-shot examples and stronger wording to the prompt to enforce 'verify identity before discussing billing disputes'. Skipped verification falls from 8% to 4% of cases. A product manager says 4% is good enough. What is the most defensible reasoning?
+  A. Accept 4% for now and continue adding examples, since each additional example is likely to halve the remaining failures until they eventually reach zero within a few weeks.
+  B. Switch to a larger model, because a more capable model will follow the verification rule in every case.
+  C. Because skipped verification exposes data and enables wrong financial actions, add a programmatic prerequisite; prompts can reduce but never eliminate the failure rate.
+  D. Add an end-of-day report that lists conversations where verification was skipped so that a manager can contact the affected customers.
+KEY: C
+WHY: When deterministic compliance is required, such as identity verification before financial or account operations, prompt instructions alone have a non-zero failure rate. Programmatic prerequisites block downstream calls until the prerequisite step is complete.
+  expl A [no]: Prompting has diminishing returns and never reaches a guarantee.
+  expl B [no]: Model capability does not turn a probabilistic behavior into a guarantee.
+  expl C [OK]: Correct. Rules with financial or privacy consequences need deterministic enforcement.
+  expl D [no]: Detection after exposure does not prevent the harm and creates remediation work.
+
+=== P4-Q03 | S1 | D1 | task 1.1 | I | select 1 ===
+STEM: A developer's loop executes the tool the model requests but then sends the next request containing only the original conversation, not the tool call or its result. The agent repeatedly calls lookup_order for the same order until the iteration cap is hit. What is wrong?
+  A. The model needs a stronger instruction not to repeat tool calls that it has already made earlier in the conversation.
+  B. The tool should return its result as a system message so the model gives it higher priority on the next turn.
+  C. The assistant's tool_use message and the matching tool_result must be appended to the conversation before the next request so the model can use the new information.
+  D. The iteration cap is too low, and raising it to a much higher number will let the model eventually proceed without needing the earlier result at all, which is the cheapest fix.
+KEY: C
+WHY: In the agentic loop, tool results must be appended to conversation history so the model can reason about the next action. Omitting them makes each iteration start from the same state.
+  expl A [no]: From its point of view it has not made the call, because the history lacks it.
+  expl B [no]: The standard mechanism is a tool_result in the conversation, not a system message.
+  expl C [OK]: Correct. Without the result in context, the model cannot move on and asks again.
+  expl D [no]: More iterations simply repeat the same failing pattern.
+
+=== P4-Q04 | S1 | D1 | task 1.4 | I | select 1 ===
+STEM: The agent must escalate a disputed $1,250 charge to a billing specialist who cannot see the chat. Which handoff payload is best?
+  A. Customer ID C-2210; disputed charge $1,250 on order #7731 (duplicate billing on 2 Mar); root cause: payment captured twice; refund exceeds agent limit; recommended: reverse the duplicate capture; customer expects resolution within 5 days.
+  B. Customer: Priya M. Issue: billing problem with a recent order. The customer is upset about a large amount and wants it fixed quickly. Please review the full chat for details.
+  C. The complete transcript of all 42 messages and the raw JSON from every tool call, attached as a text file for the specialist to read.
+  D. Customer ID C-2210; order #7731; the customer is angry and has contacted us twice before; please handle with care and call them as soon as you can today.
+KEY: A
+WHY: Structured handoff summaries should include customer ID, root cause, amount, and recommended action, since the receiving human lacks access to the transcript. Including the customer's stated expectation helps preserve commitments.
+  expl A [OK]: Correct. It contains identity, amount, cause, recommended action, and the customer's expectation.
+  expl B [no]: It points to a transcript the specialist cannot see and omits IDs, amounts, and cause.
+  expl C [no]: It forces the specialist to reconstruct the case from noise.
+  expl D [no]: It gives identifiers and sentiment but not the amount, root cause, or recommended action.
+
+=== P4-Q05 | S1 | D1 | task 1.4 | C | select 1 ===
+STEM: A hook blocks any single refund above $500 and redirects to human escalation. In testing, the agent responds to a $900 request by issuing two refunds of $450 for the same order, each below the threshold. How should the control be strengthened?
+  A. Add a prompt instruction telling the agent never to split a refund into several smaller payments in order to avoid the review threshold, and to explain why.
+  B. Make the check cumulative: evaluate the total refunded for the order including the new amount, and block and redirect when that total would exceed the threshold.
+  C. Require the agent to wait 60 seconds between refund calls so that a person has time to notice unusual patterns.
+  D. Reduce the per-call threshold to $250 so that splitting becomes less attractive to the agent.
+KEY: B
+WHY: Hooks that intercept tool calls can enforce policy deterministically, but the rule must be defined on the right quantity. Here the policy concerns total refunded amount, so state must be considered, not just the current call's argument.
+  expl A [no]: Prompt instructions are probabilistic and this is a financial control.
+  expl B [OK]: Correct. The rule's intent is a limit on total exposure, not per-call size.
+  expl C [no]: A delay does not stop the total from exceeding the limit.
+  expl D [no]: A lower per-call limit can still be split into more calls and increases escalations unnecessarily.
+
+=== P4-Q06 | S1 | D1 | task 1.7 | F | select 1 ===
+STEM: What does fork_session provide in an agent workflow?
+  A. A faster version of the same conversation that runs with a cheaper model and discards earlier tool results to save time.
+  B. A way to run the same tool call in parallel across several customer accounts and merge the results into the main session.
+  C. Independent branches of a conversation created from a shared baseline, so different approaches can be explored without affecting each other.
+  D. A permanent backup of the session transcript that is restored automatically if the agent crashes during a tool call.
+KEY: C
+WHY: fork_session creates independent branches from a shared analysis baseline to explore divergent approaches. It is distinct from resuming a named session.
+  expl A [no]: Forking does not change the model or discard history.
+  expl B [no]: Forking is about conversation branches, not fan-out of tool calls.
+  expl C [OK]: Correct. That is the purpose of forking.
+  expl D [no]: That describes persistence or crash recovery, not forking.
+
+=== P4-Q07 | S1 | D1 | task 1.1 | I | select 1 ===
+STEM: A support team wants the agent to handle returns, billing disputes, and account issues, with many ambiguous messages. One proposal is a decision tree in code that chooses the sequence of tools by request category. Another is to let Claude choose tools in the loop and use hooks for hard rules. Which is more appropriate, and why?
+  A. Let Claude choose tools within the loop because the right next action depends on context, and enforce the few non-negotiable rules with hooks and gates.
+  B. Let Claude choose tools and rely on the system prompt alone for rules such as refund limits and verification.
+  C. Use the decision tree for everything, because predictable sequences are always more reliable than model reasoning on ambiguous requests, and the team can test every path in advance.
+  D. Use the decision tree for category detection and the model only for writing the final reply to the customer.
+KEY: A
+WHY: Agentic loops are model-driven: Claude reasons about which tool to call next from context. Pre-configured decision trees are brittle for high-ambiguity requests, while hooks provide deterministic guarantees where needed.
+  expl A [OK]: Correct. Model-driven decisions handle ambiguity, and hooks cover deterministic needs.
+  expl B [no]: Prompt-only enforcement is unreliable for financial rules.
+  expl C [no]: A tree requires correct categorization first, which is the hard, ambiguous step.
+  expl D [no]: This still depends on perfect categorization before any tool is chosen.
+
+=== P4-Q08 | S1 | D2 | task 2.3 | I | select 1 ===
+STEM: To make sure the agent always calls a tool, a developer sets tool_choice to 'any' on every turn. Now the agent cannot simply ask 'Could you tell me your order number?' and instead makes tool calls with made-up arguments. What is the better configuration?
+  A. Keep 'any' on every turn and add a tool named ask_customer that wraps clarifying questions as a tool call, so that every turn still produces a tool call.
+  B. Use 'auto' for normal turns so the model can ask questions, and force a specific tool only at a step where it must run first and its inputs are available.
+  C. Remove tool_choice entirely and tell the model in the prompt to always use a tool, never plain text.
+  D. Force get_customer on every turn so that identity lookup always happens before any reply.
+KEY: B
+WHY: tool_choice 'auto' lets the model respond with text or call a tool, 'any' forces some tool call, and forced selection names a tool. Forcing is appropriate when a particular call must happen and its inputs exist.
+  expl A [no]: This adds an artificial tool and still forces a call every turn, including turns where no tool is needed.
+  expl B [OK]: Correct. Forcing should be limited to where a call is required and possible.
+  expl C [no]: Without a setting, nothing guarantees tool use and it still blocks clarifying questions.
+  expl D [no]: Forcing every turn would call it repeatedly, even without an identifier.
+
+=== P4-Q09 | S1 | D2 | task 2.1 | F | select 1 ===
+STEM: Two customer tools are often confused, get_customer (by email or phone) and lookup_order (by order number). Which addition to their descriptions is most helpful for reliable selection?
+  A. A sentence at the end of each description saying that the tool is important and should be used whenever it might be relevant.
+  B. A longer list of every field that the tool's backend database stores, whether or not the tool returns it.
+  C. For each tool, the accepted input formats, example requests, and an explicit statement of when to use it versus the other tool.
+  D. The internal service name and team owner for each tool so that the model understands who maintains them.
+KEY: C
+WHY: Tool descriptions are the primary mechanism for selection. Including input formats, example queries, edge cases, and boundaries relative to similar tools improves reliability.
+  expl A [no]: Importance statements encourage over-calling and add no distinguishing information.
+  expl B [no]: Irrelevant fields add noise without clarifying purpose.
+  expl C [OK]: Correct. Boundaries and examples let the model distinguish similar tools.
+  expl D [no]: Ownership metadata does not help decide which tool to call.
+
+=== P4-Q10 | S1 | D2 | task 2.4 | I | select 1 ===
+STEM: The agent often misapplies refund rules because it doesn't know which return categories and policy versions exist, so it calls a search_policies tool several times per conversation to discover them. How can you reduce this exploratory calling?
+  A. Add three more search tools with different parameters and similar names so that the agent can find the right policy documents in fewer attempts.
+  B. Expose the catalog of return categories and policy versions as an MCP resource so the agent can see what exists without repeated tool calls.
+  C. Ask the customer to state which policy applies so the agent does not have to look for it.
+  D. Remove search_policies and let the agent answer from its general knowledge of common return policies.
+KEY: B
+WHY: MCP resources expose content catalogs, such as documentation hierarchies and schemas, to give agents visibility into available data without exploratory tool calls.
+  expl A [no]: More overlapping search tools add selection ambiguity.
+  expl B [OK]: Correct. Resources give visibility into available content.
+  expl C [no]: Customers don't know internal policy categories.
+  expl D [no]: General knowledge does not reflect your company's policies.
+
+=== P4-Q11 | S1 | D4 | task 4.1 | I | select 1 ===
+STEM: Customers write 'I was charged for something I returned.' The agent sometimes treats this as a return and sometimes as a billing dispute, using different tools and policies each time. Which prompt improvement best makes classification consistent?
+  A. Ask the agent to handle every ambiguous message as both categories simultaneously and report two outcomes.
+  B. Tell the agent to choose whichever category it thinks is more probable for each message, and to try to stay consistent in its choices across the whole day of conversations.
+  C. Require the customer to choose a category from a menu before the conversation starts.
+  D. Provide explicit criteria with boundary rules, for example: refund already issued but charge still posted means billing dispute; item not yet returned means return.
+KEY: D
+WHY: Explicit criteria and concrete examples reduce inconsistency better than general instructions, especially where categories overlap.
+  expl A [no]: Dual handling creates conflicting actions and confusion.
+  expl B [no]: Without criteria, probability judgments stay inconsistent.
+  expl C [no]: Customers often do not know which category fits, which is why the request is ambiguous.
+  expl D [OK]: Correct. Explicit criteria resolve the overlap between categories.
+
+=== P4-Q12 | S1 | D5 | task 5.2 | C | select 2 ===
+STEM: Select the TWO conditions that are reliable triggers for escalating a support case to a human.
+  A. A sentiment score for the customer's last message falls below a set threshold.
+  B. The customer's request involves a situation the written policy does not cover or leaves ambiguous.
+  C. The conversation has exceeded ten turns, regardless of progress.
+  D. The agent cannot make meaningful progress after its tools keep failing or returning inconclusive results.
+  E. The model reports that its confidence in its answer is below 7 out of 10.
+KEY: BD
+WHY: Appropriate escalation triggers include policy exceptions or gaps and inability to make meaningful progress, in addition to explicit customer requests. Sentiment and self-reported confidence are unreliable proxies.
+  expl A [no]: Sentiment doesn't track whether the issue is beyond the agent's ability.
+  expl B [OK]: Correct. Policy gaps and exceptions need human decision-making.
+  expl C [no]: Turn count is an arbitrary proxy for difficulty.
+  expl D [OK]: Correct. Inability to progress is a legitimate trigger.
+  expl E [no]: Self-reported confidence is poorly calibrated.
+
+=== P4-Q13 | S1 | D5 | task 5.2 | I | select 2 ===
+STEM: Select the TWO behaviors that are correct for the support agent.
+  A. When several accounts match, proceed with the one with the most recent activity and tell the customer which account was used.
+  B. When get_customer returns several accounts matching a name, ask for an additional identifier before proceeding.
+  C. When the agent feels unsure, ask the customer to rate how satisfied they are with the answers so far.
+  D. When a customer sounds frustrated but has not asked for a person, escalate immediately to be safe.
+  E. When a customer explicitly asks for a human, escalate right away without first investigating the problem.
+KEY: BE
+WHY: Honor explicit human requests immediately, and ask for additional identifiers when tool results return multiple matches rather than selecting by heuristic.
+  expl A [no]: Heuristic selection risks acting on the wrong account.
+  expl B [OK]: Correct. Multiple matches require clarification instead of a guess.
+  expl C [no]: A satisfaction rating doesn't resolve uncertainty about the case.
+  expl D [no]: If the issue is within the agent's ability, acknowledge and resolve.
+  expl E [OK]: Correct. Explicit requests are honored immediately.
+
+=== P4-Q14 | S1 | D5 | task 5.1 | C | select 1 ===
+STEM: After 30 turns, the agent tells a customer 'your refund of $48 will arrive in 2 days.' The customer was told earlier, from order data, that the refund was $84.50 and to expect it in 5 business days. The conversation summary retained only 'refund approved'. What design best prevents this?
+  A. Ask the model to re-derive the refund amount from the conversation each time it mentions it.
+  B. Keep a persistent case-facts block of amounts, dates, and customer expectations from tool results, included in every prompt outside the summarized history.
+  C. Switch to a model with a bigger context window so that no summarization is ever needed.
+  D. Summarize more often, say every five turns, so that each summary is closer in time to the facts it describes, and tell the summarizer to keep all numbers.
+KEY: B
+WHY: Progressive summarization risks condensing numbers, dates, and customer-stated expectations into vague text. A persistent case-facts block extracted from tool results and kept outside summarized history preserves them.
+  expl A [no]: Re-deriving from a lossy summary reproduces the error.
+  expl B [OK]: Correct. Facts are protected from summarization drift and sourced from authoritative data.
+  expl C [no]: Larger windows delay but do not remove the need to protect key facts, and cost grows.
+  expl D [no]: More summarization increases the chance of dropping specifics.
+
+=== P4-Q15 | S1 | D5 | task 5.2 | I | select 1 ===
+STEM: A customer writes 'Please cancel it.' The context could mean cancelling a pending order or closing the account, and account closure is irreversible. What should the agent do?
+  A. Cancel the pending order, since it is the more likely meaning and the less destructive of the two.
+  B. Escalate immediately because ambiguous cancellation requests are always too risky for an automated agent.
+  C. Ask a short clarifying question to establish whether the customer means the order or the account before taking any action.
+  D. Close the account and tell the customer how to reopen it if that was a mistake.
+KEY: C
+WHY: Ambiguity resolution means asking for clarification when a request has multiple plausible meanings, especially when one action is irreversible.
+  expl A [no]: A likely guess can still be wrong and the customer may be left with an unwanted state.
+  expl B [no]: A single clarifying question usually resolves it, preserving first-contact resolution.
+  expl C [OK]: Correct. Ambiguity before an irreversible action calls for clarification.
+  expl D [no]: Closure is irreversible and shouldn't be done on a guess.
+
+=== P4-Q16 | S2 | D1 | task 1.7 | I | select 1 ===
+STEM: After analyzing a payments module in Claude Code, you want to compare two testing strategies, one with heavy mocking and one using an in-memory database, both starting from the same codebase analysis. How should you set this up?
+  A. Ask Claude to implement both strategies in a single conversation, one after the other, and compare the results at the end.
+  B. Resume the same named session in two terminals and let each pursue a different strategy in the same history.
+  C. Use fork_session to create two branches from the shared analysis and develop each strategy independently.
+  D. Start two brand-new sessions and ask each to redo the codebase analysis before building its strategy.
+KEY: C
+WHY: fork_session creates independent branches from a shared analysis baseline to explore divergent approaches, such as comparing testing or refactoring strategies.
+  expl A [no]: The first strategy's context influences the second, and the conversation grows quickly.
+  expl B [no]: Both terminals continue one lineage, which defeats the independence you want.
+  expl C [OK]: Correct. Forked branches share the baseline and diverge without contaminating each other.
+  expl D [no]: Repeating the analysis wastes effort and could produce two different baselines.
+
+=== P4-Q17 | S2 | D2 | task 2.5 | I | select 1 ===
+STEM: You need to list every Storybook file (*.stories.tsx) across a monorepo with around 80 packages. Which approach is best in Claude Code?
+  A. Use Grep to search for the text 'stories' in every file and treat each matching file as a Storybook file.
+  B. Use Read on the root directory and ask Claude to scan the listing by eye for matching file names.
+  C. Use Bash to run find and cat on all files and then ask Claude to filter the combined output.
+  D. Use Glob with a pattern such as **/*.stories.tsx to match file paths directly.
+KEY: D
+WHY: Glob matches file path patterns (for example **/*.test.tsx), while Grep searches file contents.
+  expl A [no]: Content matches would include unrelated files that mention the word.
+  expl B [no]: Reading is for file contents, and a manual scan of a large tree is impractical.
+  expl C [no]: That produces large output and bypasses the dedicated tool.
+  expl D [OK]: Correct. Glob is designed for finding files by name patterns.
+
+=== P4-Q18 | S2 | D3 | task 3.1 | F | select 1 ===
+STEM: A developer's response style preferences (short answers, no emojis) should apply in all of their projects, but the team's coding standards should apply to everyone working in this repository. Where should each go?
+  A. Both in the user-level ~/.claude/CLAUDE.md, so that the developer's settings follow them everywhere.
+  B. Preferences in a directory-level CLAUDE.md in each package, and standards in the user-level file.
+  C. Both in the project-level CLAUDE.md, so that the whole team gets the same style of answers as well.
+  D. Preferences in the user-level ~/.claude/CLAUDE.md, and team standards in the project-level CLAUDE.md committed to the repository.
+KEY: D
+WHY: The CLAUDE.md hierarchy has user-level (personal, not shared), project-level (shared via version control), and directory-level scopes.
+  expl A [no]: Team standards in a personal file are not shared with teammates.
+  expl B [no]: This reverses the scopes and scatters personal settings across the repository.
+  expl C [no]: Personal preferences would be imposed on every teammate.
+  expl D [OK]: Correct. User-level applies to one person; project-level is shared.
+
+=== P4-Q19 | S2 | D3 | task 3.4 | I | select 1 ===
+STEM: A developer must replace a deprecated API across about 400 files. Finding all usages produces thousands of lines of search output, and the developer wants to design the migration before editing anything. Which workflow is best?
+  A. Run all searches in the main conversation and begin editing files as they appear in the results, fixing each usage as soon as it is found.
+  B. Ask Claude to make the replacement in all 400 files in one direct-execution request with a one-line description.
+  C. Use plan mode, have the Explore subagent do the search and return a summary of usage patterns, then design the migration and execute it.
+  D. Skip the search and replace the API in the files the developer remembers using it.
+KEY: C
+WHY: Plan mode enables safe exploration and design before committing to changes; the Explore subagent isolates verbose discovery output and returns summaries.
+  expl A [no]: Verbose output fills the main context and editing before designing risks inconsistent changes.
+  expl B [no]: Without design, edge cases and wrappers will be handled inconsistently.
+  expl C [OK]: Correct. Plan mode supports safe design, and Explore isolates the verbose discovery.
+  expl D [no]: Memory is incomplete for a large codebase.
+
+=== P4-Q20 | S2 | D3 | task 3.2 | C | select 1 ===
+STEM: You are creating a project skill, /pr-description, that should read the diff, write a description file, and never run shell commands. It must run in an isolated context to keep the main session clean, and prompt developers for the PR number if omitted. Which SKILL.md frontmatter fits?
+  A. context: fork, allowed-tools: Bash, Read, Write, and argument-hint: [pr-number].
+  B. context: fork, allowed-tools limited to Read and Write, and argument-hint: [pr-number].
+  C. context: fork, argument-hint: [pr-number], and a note in the body that Bash must not be used.
+  D. allowed-tools limited to Read and Write, argument-hint: [pr-number], and no context setting.
+KEY: B
+WHY: Skill frontmatter supports context: fork for isolation, allowed-tools for restricting tool access, and argument-hint for prompting required parameters.
+  expl A [no]: Allowing Bash contradicts the requirement not to run shell commands.
+  expl B [OK]: Correct. It isolates context, restricts tools, and prompts for the required argument.
+  expl C [no]: A note in the body does not restrict tools; allowed-tools does.
+  expl D [no]: Without context: fork, the verbose output enters the main session.
+
+=== P4-Q21 | S2 | D3 | task 3.1 | I | select 1 ===
+STEM: Which of the following belongs in a team's project-level CLAUDE.md rather than in an individual's ~/.claude/CLAUDE.md?
+  A. The developer's habit of asking Claude to open files in a particular editor on their machine.
+  B. A developer's preference for brief explanations in the terminal and a specific commit message tone.
+  C. The team's rule that all new services must include structured logging and a health-check endpoint.
+  D. A reminder for the developer to review their own side projects on Friday afternoon.
+KEY: C
+WHY: Project-level CLAUDE.md holds shared standards committed to version control; user-level holds personal preferences that do not apply to teammates.
+  expl A [no]: This is machine-specific and personal.
+  expl B [no]: Personal style preferences belong at the user level.
+  expl C [OK]: Correct. Shared standards belong in the project-level file.
+  expl D [no]: This is unrelated to the shared repository.
+
+=== P4-Q22 | S2 | D3 | task 3.3 | I | select 1 ===
+STEM: Terraform modules in your repository live both under terraform/ and in several infra/ subfolders, and all .tf files must follow the same module conventions. A rule is currently scoped to paths: ["terraform/**/*"], so edits in infra/ ignore it. What is the best fix?
+  A. Delete the paths field so the rule loads on every request and covers every directory.
+  B. Move the Terraform conventions into the root CLAUDE.md so that they apply everywhere.
+  C. Duplicate the rule file for each infra/ subfolder with a path matching that subfolder.
+  D. Scope the rule with a glob by file type, such as paths: ["**/*.tf"], so it applies wherever .tf files are edited.
+KEY: D
+WHY: Glob patterns in path-specific rules apply conventions by file type regardless of directory location.
+  expl A [no]: Removing scoping adds irrelevant context to every session.
+  expl B [no]: That loads Terraform conventions in unrelated work.
+  expl C [no]: Duplicated rules drift and miss new folders.
+  expl D [OK]: Correct. A file-type glob covers all locations.
+
+=== P4-Q23 | S2 | D3 | task 3.4 | C | select 1 ===
+STEM: A senior engineer says, 'Always use plan mode first, it is the professional approach.' Another says, 'Plan mode is overhead, always execute directly.' Which view best reflects the guidance for choosing?
+  A. Use plan mode for every task over ten lines of code, since planning time is always cheaper than any rework, and the extra step guards against surprises.
+  B. Use plan mode for large, multi-file, or architectural tasks with several valid approaches, and direct execution for well-scoped changes with a clear cause.
+  C. Use plan mode whenever a task touches more than one file, even if the change is identical in each file and obvious.
+  D. Use direct execution for all tasks and switch to plan mode only when the first attempt fails twice.
+KEY: B
+WHY: Plan mode is designed for complex tasks involving large-scale changes, multiple approaches, architectural decisions, and multi-file modifications; direct execution suits simple, well-scoped changes.
+  expl A [no]: A line count is not the criterion, and trivial tasks do not benefit from planning.
+  expl B [OK]: Correct. Choose based on complexity and uncertainty.
+  expl C [no]: A mechanical, well-understood change may not need planning, though scope matters.
+  expl D [no]: Architectural tasks should be planned before costly attempts.
+
+=== P4-Q24 | S2 | D3 | task 3.1 | F | select 2 ===
+STEM: Select the TWO statements about sharing Claude Code configuration that are correct.
+  A. Skills in ~/.claude/skills/ are shared with the team whenever the project is pulled.
+  B. Instructions in the project-level CLAUDE.md are shared with teammates through version control.
+  C. Instructions in ~/.claude/CLAUDE.md apply only to that user and are not shared with teammates.
+  D. MCP servers defined in a developer's ~/.claude.json are automatically available to every teammate.
+  E. Slash commands in ~/.claude/commands/ are automatically available to everyone who clones the repository.
+KEY: BC
+WHY: Project-level configuration (CLAUDE.md, .claude/commands, .claude/skills, .mcp.json) is shared via version control; user-level configuration (~/.claude/...) is personal.
+  expl A [no]: User-level skills are personal.
+  expl B [OK]: Correct. Committed project files reach everyone who clones.
+  expl C [OK]: Correct. User-level files are personal.
+  expl D [no]: User-scoped configuration is personal.
+  expl E [no]: User-scoped commands are personal.
+
+=== P4-Q25 | S2 | D3 | task 3.3 | C | select 1 ===
+STEM: You want testing conventions to load only for test files in every package, while keeping the root CLAUDE.md small. A teammate proposes putting the conventions in a file imported with @import from the root CLAUDE.md. Why is a path-scoped rule better here?
+  A. An imported file loads along with CLAUDE.md regardless of the file being edited, whereas a path-scoped rule loads only when matching test files are involved.
+  B. Path-scoped rules can contain more text than imported files, so the test conventions fit in one place.
+  C. Path-scoped rules are applied to teammates only if they run a slash command first.
+  D. Imported files are ignored by Claude Code when they are referenced from the root CLAUDE.md, so conventions placed there would never take effect in any session.
+KEY: A
+WHY: @import keeps CLAUDE.md modular, but imported content loads with the file. Path-specific rules load conditionally when editing matching files, reducing irrelevant context.
+  expl A [OK]: Correct. Conditional loading is the point of the path-scoped rule.
+  expl B [no]: Size is not the difference.
+  expl C [no]: Rules load automatically based on file paths.
+  expl D [no]: @import is a supported way to modularize CLAUDE.md.
+
+=== P4-Q26 | S2 | D4 | task 4.2 | I | select 2 ===
+STEM: Claude Code writes pull request descriptions in varying formats and misjudges how to describe refactor-only PRs that change no behavior. Select the TWO techniques most likely to improve consistency and judgment.
+  A. Ask Claude to produce each description twice and choose the longer one.
+  B. Provide thirty examples drawn from last year's PRs so that the model has seen as many variations as possible.
+  C. Write the format requirements in capital letters at the top of the prompt for emphasis.
+  D. Include an ambiguous refactor-only example with a short explanation of why it is described the way it is.
+  E. Provide two to four examples of well-formed descriptions showing the desired sections (summary, risk, test plan).
+KEY: DE
+WHY: A few targeted few-shot examples demonstrate desired output format and, when they include reasoning for ambiguous cases, help the model generalize judgment.
+  expl A [no]: Length is not a quality criterion.
+  expl B [no]: Large numbers of examples add tokens and can reinforce inconsistent styles.
+  expl C [no]: Emphasis does not demonstrate the format.
+  expl D [OK]: Correct. Reasoned examples teach handling of ambiguous cases.
+  expl E [OK]: Correct. Examples demonstrate the output format.
+
+=== P4-Q27 | S2 | D5 | task 5.4 | I | select 1 ===
+STEM: You maintain a scratchpad file during a long Claude Code exploration. What should it contain to be most useful for later questions?
+  A. General notes about typical architectures of similar systems, to give Claude background knowledge.
+  B. A running word count and timestamps for each action so that progress can be measured.
+  C. The full raw output of every search and file read performed so far.
+  D. Key findings: specific class and file names, call paths, decisions made, and open questions.
+KEY: D
+WHY: Scratchpad files record key findings to persist them across context boundaries, counteracting degradation in extended sessions.
+  expl A [no]: Generic patterns are what degraded sessions already fall back on.
+  expl B [no]: These are not the findings that answer later questions.
+  expl C [no]: Raw output reintroduces the volume you are trying to avoid.
+  expl D [OK]: Correct. Specific, durable findings counter context degradation.
+
+=== P4-Q28 | S2 | D5 | task 5.1 | I | select 1 ===
+STEM: A developer pastes a 3,000-line CI log into Claude Code. The single failing assertion is buried around line 1,400, and Claude's analysis misses it and discusses unrelated warnings. What is the best way to present the input?
+  A. Paste the log in reverse order so the end of the file appears first.
+  B. Ask Claude to read the log slowly and carefully before answering.
+  C. Paste the log twice in the same message so that the failing assertion appears in two places and is therefore more likely to be noticed by the model.
+  D. Lead with a short summary of the failing test and the question, trim the log to relevant sections, and organize the rest under clear headers.
+KEY: D
+WHY: Models may omit findings from the middle of long inputs. Place key findings at the beginning, trim verbose output, and use explicit section headers.
+  expl A [no]: Reversing keeps the failure buried and makes it harder to read.
+  expl B [no]: Instructions about care do not change attention distribution.
+  expl C [no]: Duplication increases length without surfacing the failure.
+  expl D [OK]: Correct. Key information up front and structure mitigate position effects.
+
+=== P4-Q29 | S4 | D1 | task 1.3 | I | select 3 ===
+STEM: A team is configuring a coordinator and subagents with the Claude Agent SDK. Select the THREE statements that are correct.
+  A. The coordinator's allowedTools must include "Task" for it to be able to spawn subagents.
+  B. Subagents can see the coordinator's full conversation history, so passing results in the prompt is optional.
+  C. Context needed by a subagent must be provided explicitly in its prompt because it does not inherit the coordinator's history.
+  D. Subagents share a persistent memory with the coordinator, so findings from earlier invocations are available automatically.
+  E. A subagent automatically receives every tool the coordinator has, regardless of its own definition.
+  F. Emitting several Task calls in a single coordinator response lets independent subagents run in parallel.
+KEY: ACF
+WHY: Subagents are spawned via the Task tool (requires allowedTools to include "Task"), have isolated context that must be populated explicitly, and can be run in parallel by emitting multiple Task calls in a single response.
+  expl A [OK]: Correct. The Task tool is the spawning mechanism.
+  expl B [no]: They do not inherit conversation history.
+  expl C [OK]: Correct. Subagents operate with isolated context.
+  expl D [no]: Subagents do not share memory between invocations.
+  expl E [no]: Tool access is set per AgentDefinition.
+  expl F [OK]: Correct. Parallel spawning uses multiple Task calls in one response.
+
+=== P4-Q30 | S4 | D1 | task 1.2 | F | select 1 ===
+STEM: In a hub-and-spoke developer-productivity agent, the explorer subagent discovers a flaky test that the test-writer subagent should know about. How should this finding reach the test-writer?
+  A. The finding is left out because subagents should work independently without sharing findings.
+  B. The explorer returns it to the coordinator, which includes it in the test-writer's prompt.
+  C. The test-writer reads the explorer's conversation history on startup.
+  D. The explorer writes directly into the test-writer's context while both are running.
+KEY: B
+WHY: In a hub-and-spoke architecture, the coordinator manages all inter-subagent communication, information routing, and error handling.
+  expl A [no]: Independence of context doesn't mean relevant findings shouldn't be passed on.
+  expl B [OK]: Correct. The coordinator manages information routing between subagents.
+  expl C [no]: Subagents don't have access to each other's conversation history.
+  expl D [no]: Subagents have isolated contexts and cannot write into each other's.
+
+=== P4-Q31 | S4 | D1 | task 1.3 | C | select 1 ===
+STEM: A coordinator's prompt lists nine numbered steps for the code explorer ('1. open src/, 2. read index.ts ...'). It works for one repository but fails in others with different layouts, and the subagent keeps following the steps even when they make no sense. What is the best redesign?
+  A. Remove all instructions so the subagent works only from its name and tool list.
+  B. Keep the steps but state that the subagent must follow them exactly, with no deviation permitted.
+  C. Add more numbered steps to cover each known repository layout and choose the right set of steps by looking at the repository name, updating the prompt when a new layout appears.
+  D. State the goal and quality criteria (entry points, key modules, external dependencies, with file references) and let the subagent decide how to explore.
+KEY: D
+WHY: Coordinator prompts should specify research or exploration goals and quality criteria rather than step-by-step procedures, enabling subagent adaptability.
+  expl A [no]: Without a goal and quality criteria the output is unpredictable.
+  expl B [no]: Strict adherence worsens failures when the steps don't fit.
+  expl C [no]: A growing list of layouts is brittle and never complete.
+  expl D [OK]: Correct. Goal-oriented prompts allow adaptation to different structures.
+
+=== P4-Q32 | S4 | D1 | task 1.2 | I | select 1 ===
+STEM: A coordinator uses an iterative refinement loop: after each exploration round it checks whether key areas are covered and re-delegates gaps. The loop sometimes runs many rounds on obscure code without improving. What is the best way to bound it?
+  A. Define coverage criteria as the stopping condition, add a maximum number of rounds as a backstop, and report any remaining gaps explicitly.
+  B. Stop when the subagent's report becomes longer than the previous one, as growth indicates new content.
+  C. Stop after exactly two rounds in every case so that run time is always the same.
+  D. Let the loop continue until the coordinator feels it has explored enough, with no cap.
+KEY: A
+WHY: Iterative refinement evaluates synthesis for gaps and re-delegates until coverage is sufficient; practical systems also add limits and surface remaining gaps.
+  expl A [OK]: Correct. Criteria drive stopping, a cap protects against runaway loops, and gaps are disclosed.
+  expl B [no]: Length doesn't measure coverage.
+  expl C [no]: A fixed count ignores whether coverage was achieved.
+  expl D [no]: No bound risks unlimited cost on obscure code.
+
+=== P4-Q33 | S4 | D1 | task 1.3 | C | select 1 ===
+STEM: The explorer subagent finds the signature, file path, and behavior of 12 functions. The coordinator then spawns a test-writer subagent with the prompt 'Write tests for the billing functions found earlier.' The test-writer invents function names. What went wrong and what is the fix?
+  A. The test-writer's model is not strong enough for this task; replace it with a larger and more capable model while keeping exactly the same prompt, and rerun the job.
+  B. The test-writer has no access to the explorer's findings; include the complete findings (signatures, paths, behaviors) in structured form directly in its prompt.
+  C. The explorer should run again with the test-writer attached so that it can overhear the results.
+  D. The prompt is too long; shorten it to 'Write billing tests' so the subagent is not confused.
+KEY: B
+WHY: Subagent context must be explicitly provided in the prompt; subagents do not inherit parent context or share memory. Include complete findings, ideally structured, in the subagent's prompt.
+  expl A [no]: No model can use information it has not received.
+  expl B [OK]: Correct. Subagents must be given the context explicitly.
+  expl C [no]: There is no overhearing, and subagents don't share memory.
+  expl D [no]: Removing information makes invention more likely.
+
+=== P4-Q34 | S4 | D2 | task 2.3 | I | select 1 ===
+STEM: A developer-productivity agent is connected to three MCP servers that together expose 42 tools. The agent increasingly picks the wrong tool for ordinary requests. What is the best structural fix?
+  A. Switch tool_choice to forced selection on the most frequently used tool.
+  B. Keep all 42 tools and add a prompt table listing which tool to use for each of the 200 most common requests, and update the table every month.
+  C. Rename all 42 tools with a common prefix so that the model can group them more easily.
+  D. Give each agent or subagent only the small set of tools relevant to its role (roughly 4-5), keeping the rest out of its available tools.
+KEY: D
+WHY: Giving an agent too many tools degrades selection reliability. Scoped tool access, giving agents only the tools they need, improves it.
+  expl A [no]: Forcing one tool prevents appropriate selection.
+  expl B [no]: A large table is hard to maintain and doesn't reduce decision complexity.
+  expl C [no]: Prefixes don't reduce the number of options.
+  expl D [OK]: Correct. Fewer relevant tools reduce decision complexity.
+
+=== P4-Q35 | S4 | D2 | task 2.5 | C | select 1 ===
+STEM: You want the agent to inspect repository history and run linters without being able to push, delete, or rewrite anything. Which approach to Bash access is best?
+  A. Grant general Bash but run it only on Fridays when fewer developers are working.
+  B. Restrict shell access to a narrow set of read-only commands (such as git log, git diff, and the linter), rather than granting general Bash.
+  C. Grant general Bash and tell the agent in the prompt which commands it is allowed to run and which ones it must never run, with examples of both.
+  D. Remove Bash and have the developer paste the output of any command that the agent needs.
+KEY: B
+WHY: Shell commands are high-risk tools. Scope them to the operations required, favoring read-only access where writes are not needed.
+  expl A [no]: Timing does not control which commands run.
+  expl B [OK]: Correct. Least privilege limits the damage a mistaken command can do.
+  expl C [no]: A prompt cannot prevent a destructive command from being issued.
+  expl D [no]: This blocks the workflow when a narrow read-only grant would be safe.
+
+=== P4-Q36 | S4 | D2 | task 2.4 | C | select 1 ===
+STEM: The agent keeps asking engineers which tables and columns exist before writing queries, or guesses column names and fails. The database schema is stable and well documented. How can you give the agent visibility without repeated exploratory calls?
+  A. Expose the database schema as an MCP resource so the agent can see the available tables and columns.
+  B. Paste the full schema into every user message to make sure the agent always has it.
+  C. Add a run_any_query tool and let the agent discover the schema by issuing exploratory queries each session.
+  D. Tell the agent to infer the schema from the names of the application's model classes.
+KEY: A
+WHY: MCP resources expose content catalogs such as database schemas to reduce exploratory tool calls.
+  expl A [OK]: Correct. Schemas are a named example of catalog content for resources.
+  expl B [no]: This wastes tokens and requires users to do it each time.
+  expl C [no]: That creates the exploratory calls you wanted to avoid and gives broad access.
+  expl D [no]: Inference can diverge from the real schema.
+
+=== P4-Q37 | S4 | D3 | task 3.4 | I | select 1 ===
+STEM: A developer uses plan mode for every task, including adding a new CRUD endpoint that follows an existing, identical pattern in the same module, and finds the process slow. What is the better practice?
+  A. Ask a teammate to write the endpoint manually, because the tool is not suitable for repetitive work.
+  B. Use direct execution for well-understood, pattern-following changes like this, and reserve plan mode for tasks with architectural decisions or unclear scope.
+  C. Keep using plan mode but make each plan longer and more detailed so that it covers every field, route, and test of the new endpoint, reviewed by a teammate.
+  D. Switch to direct execution for everything, including multi-service restructuring, to avoid delays.
+KEY: B
+WHY: Direct execution is appropriate for simple, well-scoped changes; plan mode is for complex tasks with architectural implications.
+  expl A [no]: Repetitive, pattern-based work is a good fit for direct execution.
+  expl B [OK]: Correct. Match the mode to the complexity.
+  expl C [no]: Longer plans add overhead to a task that does not need one.
+  expl D [no]: Large architectural changes still need planning.
+
+=== P4-Q38 | S4 | D3 | task 3.2 | I | select 1 ===
+STEM: Engineers repeatedly ask for a new REST resource consisting of a model, route, and test file, each time retyping a long prompt. They want a shared, reusable, on-demand workflow that asks for the resource name. What should they build?
+  A. A .mcp.json entry that runs a server producing the three files without involving Claude.
+  B. A project skill in .claude/skills/ with a SKILL.md describing the workflow and an argument-hint for the resource name.
+  C. A section in CLAUDE.md that describes the scaffolding steps so that Claude loads them at the start of every session.
+  D. A personal note in each engineer's ~/.claude/CLAUDE.md with the prompt text to copy and paste.
+KEY: B
+WHY: Skills are for on-demand, task-specific workflows; CLAUDE.md is for always-loaded universal standards. Project-scoped skills are shared via version control.
+  expl A [no]: That changes the design, and MCP servers are for tool and resource access, not workflow instructions.
+  expl B [OK]: Correct. Skills fit on-demand, task-specific workflows.
+  expl C [no]: Always-loaded content adds context to sessions that don't need it.
+  expl D [no]: That is personal, not shared, and still manual.
+
+=== P4-Q39 | S4 | D3 | task 3.5 | F | select 1 ===
+STEM: A developer is unfamiliar with websocket reconnection and asks Claude Code to 'make the client reconnect'. They expect Claude to know all the requirements. What approach best surfaces unconsidered concerns?
+  A. Ask Claude to implement the simplest possible reconnect loop and test it manually in the developer's environment before adding anything else.
+  B. Ask Claude for three different implementations and pick the shortest one.
+  C. Ask Claude to write the code and then summarize what it chose not to handle.
+  D. Ask Claude to interview them first about backoff, message loss, authentication refresh, and failure modes before implementing.
+KEY: D
+WHY: The interview pattern has Claude ask questions to surface design considerations before implementing in unfamiliar domains.
+  expl A [no]: Manual testing of a naive version won't reveal missing design concerns.
+  expl B [no]: Length is not a quality criterion for resilience.
+  expl C [no]: Learning the omissions after implementation costs rework.
+  expl D [OK]: Correct. The interview pattern reveals design considerations the developer hasn't anticipated.
+
+=== P4-Q40 | S4 | D3 | task 3.4 | I | select 1 ===
+STEM: A manager is nervous about letting an AI assistant loose in an unfamiliar, business-critical billing module. They want Claude to understand the code and propose changes for review before any files are modified. Which mode supports this?
+  A. Letting Claude write changes straight to the main branch and rely on tests to catch issues.
+  B. Direct execution with a request to 'be careful' and a promise to review the diff afterwards.
+  C. Plan mode, which allows safe exploration and design before changes are committed.
+  D. Direct execution inside a user-level CLAUDE.md that forbids edits on Fridays.
+KEY: C
+WHY: Plan mode enables safe codebase exploration and design before committing to changes, preventing costly rework.
+  expl A [no]: Bypassing review in a critical module is risky.
+  expl B [no]: Direct execution modifies files, and review comes after the changes.
+  expl C [OK]: Correct. Plan mode separates investigation and design from modification.
+  expl D [no]: A calendar rule is unrelated to the review need.
+
+=== P4-Q41 | S4 | D4 | task 4.2 | I | select 1 ===
+STEM: The legacy-code summaries the agent produces vary: some list risks, some don't, and locations are described inconsistently. Which addition to the prompt gives the most consistent, actionable format?
+  A. A word limit that applies equally to all summaries, regardless of module size.
+  B. A few examples of ideal summaries showing the format: location, issue, severity, and suggested next step.
+  C. An instruction to write summaries in the style of the most recent summary the agent produced.
+  D. A paragraph reminding the model to be consistent and to include everything a developer might want to know.
+KEY: B
+WHY: Few-shot examples demonstrating the specific desired output format (location, issue, severity, suggested fix) achieve consistency.
+  expl A [no]: A uniform length cap doesn't produce consistent content.
+  expl B [OK]: Correct. Examples demonstrating format produce consistent, actionable output.
+  expl C [no]: The previous summary may itself be inconsistent.
+  expl D [no]: General reminders don't specify the format.
+
+=== P4-Q42 | S4 | D4 | task 4.2 | I | select 1 ===
+STEM: When extracting hidden dependencies from legacy code, the agent finds them when documented in a header comment but misses them when mentioned in inline notes or config files. Which change is most likely to help?
+  A. Restrict the task to files that have header comments, since they contain the clearest documentation.
+  B. Require the agent to list at least ten dependencies per file to prevent empty results.
+  C. Instruct the agent to search more thoroughly, to be careful when reading unusual places such as inline notes, and to double-check its results before finishing.
+  D. Add few-shot examples showing dependencies being extracted from several different styles: header comments, inline notes, and config files.
+KEY: D
+WHY: Few-shot examples demonstrating correct extraction from documents with varied formats address missed or empty extractions.
+  expl A [no]: This ignores dependencies documented elsewhere.
+  expl B [no]: Forcing a minimum encourages invented dependencies.
+  expl C [no]: General instructions don't show what to look for.
+  expl D [OK]: Correct. Examples of varied structures improve extraction across formats.
+
+=== P4-Q43 | S4 | D5 | task 5.4 | F | select 1 ===
+STEM: In a large codebase exploration, the main agent needs to know where all test files for the checkout module live. The result could be hundreds of paths and lots of file reading. How should the main agent protect its context?
+  A. Delegate the question to a subagent that finds the test files and returns a concise summary, so that the main agent keeps its context for coordination.
+  B. Ask the user to list the test files manually.
+  C. Have the main agent read every candidate test file itself so that it holds the full details and can answer follow-up questions later without delegating.
+  D. Skip the question and assume tests live next to the source files.
+KEY: A
+WHY: Subagent delegation isolates verbose exploration output, such as finding all test files, while the main agent preserves high-level coordination.
+  expl A [OK]: Correct. Subagents isolate verbose exploration.
+  expl B [no]: This pushes tool-suited work onto the user.
+  expl C [no]: That floods the main context.
+  expl D [no]: An assumption could be wrong and cause missed coverage.
+
+=== P4-Q44 | S6 | D1 | task 1.5 | I | select 1 ===
+STEM: The extraction schema includes a boolean validated that the model sets to true when it believes the record is correct. A pre-call hook on write_to_erp allows the write only when validated is true. Bad records still reach the ERP. What is the design flaw and fix?
+  A. The prompt should state more strongly that validated may be true only when every field has been checked.
+  B. The flag should be an integer from 1 to 10 instead of a boolean, and the hook should allow writes at 8 or above.
+  C. The hook should be removed because validation belongs in the prompt, not in the pipeline.
+  D. The hook trusts a model-attested flag; have the hook run the validation checks itself (schema and business rules) and allow the write only if they pass.
+KEY: D
+WHY: Hooks and gates provide deterministic guarantees only if they check facts themselves. A gate keyed to a flag the model sets inherits the model's unreliability.
+  expl A [no]: Prompt wording doesn't turn a self-assertion into a verification.
+  expl B [no]: A numeric self-rating is still model-attested and poorly calibrated.
+  expl C [no]: Removing the hook removes the only deterministic gate.
+  expl D [OK]: Correct. The gate must verify, not rely on the model's claim.
+
+=== P4-Q45 | S6 | D1 | task 1.5 | I | select 1 ===
+STEM: The OCR tool returns, for each page, a very large array of word-level confidence values and bounding boxes. Only the text and a page-level confidence are needed for extraction, but the arrays fill the context and slow down every call. What is the best fix?
+  A. A PostToolUse hook that trims each result to the text and page-level confidence before the model processes it, optionally storing the full payload elsewhere.
+  B. A prompt instruction telling the model to ignore the bounding boxes and word-level confidence values in the OCR output and to focus on the page text, which saves effort.
+  C. A larger context window so that the arrays fit comfortably across more pages.
+  D. A second model that summarizes the OCR output before the extraction agent reads it.
+KEY: A
+WHY: PostToolUse hooks intercept tool results for transformation before the model processes them, and trimming verbose outputs to relevant fields preserves context.
+  expl A [OK]: Correct. Hooks can transform results so only relevant fields reach the model.
+  expl B [no]: The tokens are still consumed, and the model still sees the noise.
+  expl C [no]: More capacity does not remove cost or noise.
+  expl D [no]: This adds a stage and a possible loss when a deterministic trim suffices.
+
+=== P4-Q46 | S6 | D1 | task 1.6 | F | select 1 ===
+STEM: An extraction service handles invoices, receipts, and contracts, each with a different schema and validation rules. A single prompt tries to handle all of them and performs inconsistently. What decomposition is best?
+  A. A single longer prompt that includes all three schemas and all validation rules, with an instruction to apply the right ones.
+  B. Three separate services, one per type, with users choosing which to upload to.
+  C. A prompt chain: first classify the document type, then extract with a type-specific schema and prompt, then run validation.
+  D. An open-ended agent that invents a new plan for every document, including its own schema.
+KEY: C
+WHY: Prompt chaining breaks predictable multi-step work into sequential focused steps, which fits classify, extract, and validate pipelines.
+  expl A [no]: A single prompt still mixes concerns and increases inconsistency.
+  expl B [no]: This pushes classification onto users who may not know the type.
+  expl C [OK]: Correct. The stages are known in advance and each focuses on one job.
+  expl D [no]: Unbounded planning makes outputs and downstream integration unpredictable.
+
+=== P4-Q47 | S6 | D2 | task 2.2 | I | select 1 ===
+STEM: The ERP posting tool can fail in three ways: the ERP is temporarily unavailable, the vendor ID in the record is invalid, and the accounting period is closed for postings. Which handling matches each failure best?
+  A. Treat all three as transient failures and retry each of them up to five times with a pause, logging each attempt, before finally reporting a failure to the user.
+  B. Report all three to the agent as the same generic failure so it does not take wrong action.
+  C. Treat all three as business errors and route every failure to manual review immediately.
+  D. Unavailable: transient and retryable; invalid vendor ID: validation error, fix input and resubmit; closed period: business error, not retryable, route for review.
+KEY: D
+WHY: Distinguish transient errors (retry), validation errors (correct input), business errors (policy; non-retryable with explanation), and permission errors, using structured metadata.
+  expl A [no]: Validation and business errors will never succeed on retry.
+  expl B [no]: Generic failures prevent appropriate recovery.
+  expl C [no]: That overloads reviewers with failures a retry would resolve.
+  expl D [OK]: Correct. Each category implies a different recovery.
+
+=== P4-Q48 | S6 | D2 | task 2.1 | I | select 1 ===
+STEM: The system prompt says: 'For anything that contains a dollar amount, use extract_invoice.' The extraction agent now sends receipts and contracts with amounts to extract_invoice, even though extract_receipt and extract_contract have good descriptions. What is the most effective fix?
+  A. Remove the keyword-based rule from the system prompt so selection relies on the tool descriptions and their boundaries.
+  B. Delete extract_receipt and extract_contract so there is only one extraction tool.
+  C. Add a second rule saying 'use extract_receipt for anything containing the word receipt'.
+  D. Move the rule into the tool description of extract_invoice so that it is closer to the tool.
+KEY: A
+WHY: Keyword-sensitive instructions in a system prompt can create unintended tool associations that override well-written tool descriptions.
+  expl A [OK]: Correct. Keyword-sensitive instructions can override good descriptions.
+  expl B [no]: This loses document-specific schemas.
+  expl C [no]: More keyword rules create more overlaps.
+  expl D [no]: The rule would still bias selection toward extract_invoice.
+
+=== P4-Q49 | S6 | D2 | task 2.2 | C | select 1 ===
+STEM: lookup_vendor returns an empty list both when the vendor is genuinely new and when the master-data service times out. The agent treats an empty list as 'new vendor' and creates a new record, producing duplicates of existing vendors. What is the best change?
+  A. Add a prompt line telling the agent to be careful about creating duplicate vendors.
+  B. Make create_vendor idempotent on name alone, so repeated creation merges all records with equal names.
+  C. Return a transient error when the lookup fails and an empty success only for a completed search with no match; create a vendor only on the latter.
+  D. Keep the single empty result but have the agent call lookup_vendor three times in a row before it decides to create a new vendor record, on the theory that a service outage would not last that long.
+KEY: C
+WHY: Distinguish access failures (needing retry decisions) from valid empty results (successful queries with no matches) so the agent does not act on missing information.
+  expl A [no]: The agent cannot see the difference between the two empty results.
+  expl B [no]: Name-only merging would conflate different vendors and doesn't fix misread failures.
+  expl C [OK]: Correct. Access failure and valid empty are distinguished, preventing duplicates.
+  expl D [no]: Repeated timeouts produce repeated empty results.
+
+=== P4-Q50 | S6 | D2 | task 2.3 | I | select 1 ===
+STEM: The extraction flow first needs to classify an unknown document among three extractors (extract_invoice, extract_receipt, extract_contract), and then always call enrich_vendor with the result. Which tool_choice settings best implement this?
+  A. Use 'any' for the classification-and-extraction request, then force enrich_vendor in the following request.
+  B. Force extract_invoice for the first request, then 'auto' for the enrichment request.
+  C. Use 'auto' for both requests and rely on the prompt to make the model call tools.
+  D. Force enrich_vendor in the first request, then use 'any' for extraction.
+KEY: A
+WHY: tool_choice 'any' guarantees a tool call when the type is unknown; forced selection ensures a specific tool runs, with later steps in follow-up turns.
+  expl A [OK]: Correct. 'any' guarantees an extractor is called; forcing guarantees the enrichment step.
+  expl B [no]: Forcing a single extractor would mishandle receipts and contracts.
+  expl C [no]: 'auto' permits text responses, so neither step is guaranteed.
+  expl D [no]: Enrichment depends on the extraction result, so it cannot come first.
+
+=== P4-Q51 | S6 | D4 | task 4.3 | I | select 1 ===
+STEM: Some supplier invoices have no discount line. The schema requires discount_percent as a number, and the model fills in 0 for these documents. Later, finance cannot tell 'no discount' from 'discount not stated'. What is the better schema design?
+  A. Make discount_percent nullable and instruct the model to return null when the document does not state a discount, reserving 0 for an explicitly stated 0%.
+  B. Make it a string and allow values such as 'none', 'n/a', or 'unknown' in free text.
+  C. Remove the field from the schema, since discounts are sometimes missing.
+  D. Keep it required and add a note in the prompt asking the model for its best estimate of the discount whenever the document does not state one, rounded to a whole percent.
+KEY: A
+WHY: Design schema fields as optional or nullable when sources may not contain the information, preventing the model from fabricating values to satisfy required fields.
+  expl A [OK]: Correct. Null preserves the difference between unknown and zero.
+  expl B [no]: Free-form strings make downstream handling inconsistent.
+  expl C [no]: This loses real discounts that the documents do state.
+  expl D [no]: Asking for an estimate invents data the document never stated, which downstream systems would then treat as fact.
+
+=== P4-Q52 | S6 | D4 | task 4.4 | F | select 1 ===
+STEM: A validation step finds that a line item's quantity is a string ('two') instead of a number. For the retry request, what should be included to maximize the chance of a correct extraction?
+  A. The original document, the failed extraction, and the specific validation error describing the field and expected type.
+  B. The original request repeated unchanged, with a note to try again.
+  C. Only the validation error text, without the document, so that the model is not distracted by unrelated content and can focus on the field.
+  D. The failed extraction and a request to make it better, without specifying the error.
+KEY: A
+WHY: Retry-with-error-feedback includes the original document, the failed extraction, and specific validation errors to guide self-correction.
+  expl A [OK]: Correct. This gives the model what it needs to self-correct.
+  expl B [no]: No new information is provided about what to fix.
+  expl C [no]: Without the document the model cannot re-extract.
+  expl D [no]: A vague request doesn't point to the defect.
+
+=== P4-Q53 | S6 | D4 | task 4.4 | C | select 2 ===
+STEM: Strict schemas via tool use have eliminated malformed JSON. Select the TWO remaining problems that are still possible and require semantic validation.
+  A. A tool input that omits a required property defined in the schema.
+  B. A ship-to address placed in the bill-to field.
+  C. A response that is not parseable JSON because of a missing closing brace.
+  D. A response in which a number field contains an unquoted letter sequence.
+  E. Line item amounts that do not add up to the stated invoice total.
+KEY: BE
+WHY: Strict JSON schemas via tool use eliminate syntax errors but not semantic errors such as values that don't sum or values in wrong fields.
+  expl A [no]: Schema enforcement via tool use prevents missing required properties.
+  expl B [OK]: Correct. A value in the wrong field is valid structurally but wrong.
+  expl C [no]: Tool use with a schema eliminates JSON syntax errors.
+  expl D [no]: Type violations are structural errors that the schema prevents.
+  expl E [OK]: Correct. Valid JSON can contain inconsistent numbers.
+
+=== P4-Q54 | S6 | D4 | task 4.5 | I | select 1 ===
+STEM: A product manager proposes moving all extraction to the Message Batches API to cut costs by 50%, including the interactive upload screen where a user waits for confirmation of the extracted fields. How should you respond?
+  A. Reject batches for the whole system because their results cannot be correlated with requests.
+  B. Approve moving everything to batch and show a progress bar and a friendly message while the user waits for the results to come back, since the 50% savings justify it.
+  C. Keep the interactive upload on the synchronous API because batches have no latency guarantee, and use batches only for non-blocking bulk work.
+  D. Approve moving everything to batch but add a fallback to synchronous calls if results take over a minute.
+KEY: C
+WHY: The Message Batches API provides 50% savings with up to 24-hour processing and no latency SLA, so it suits latency-tolerant bulk work and not blocking, user-facing steps.
+  expl A [no]: Results can be correlated with custom_id.
+  expl B [no]: Batch completion can take up to 24 hours with no guarantee.
+  expl C [OK]: Correct. A waiting user needs predictable latency.
+  expl D [no]: This adds complexity and the fallback would run most of the time.
+
+=== P4-Q55 | S6 | D4 | task 4.3 | F | select 1 ===
+STEM: A developer asks Claude for extraction results by writing 'Return JSON with these fields' in the prompt, and parses the text. About 2% of responses contain extra prose or invalid JSON. What is the most reliable improvement?
+  A. Define an extraction tool whose input schema is the target JSON, and read the result from the tool_use block.
+  B. Ask the model to double-check that its JSON is valid before it responds.
+  C. Add an instruction to the prompt saying 'respond only with valid JSON and no other text'.
+  D. Parse the first brace-delimited region in the response with a lenient parser and discard the rest.
+KEY: A
+WHY: Tool use with JSON schemas is the most reliable approach for guaranteed schema-compliant structured output, eliminating JSON syntax errors.
+  expl A [OK]: Correct. Tool use with a JSON schema is the most reliable path to schema-compliant output.
+  expl B [no]: A request to self-check is not enforcement.
+  expl C [no]: This helps but remains probabilistic.
+  expl D [no]: Lenient parsing may mask or mis-parse malformed output.
+
+=== P4-Q56 | S6 | D4 | task 4.5 | C | select 1 ===
+STEM: Your extraction SLA promises every document's result within 48 hours of arrival. You submit accumulated documents to the Message Batches API at 06:00 and 18:00 each day, and a batch can take up to 24 hours. Documents that fail validation are corrected and resubmitted in the next scheduled submission. Which statement is accurate?
+  A. First-pass results arrive within 36 hours at worst (up to 12 waiting plus 24 processing), but a resubmitted document can take up to 72 hours, so the SLA cannot be guaranteed for retries.
+  B. The 48-hour SLA is guaranteed for every document, because the worst case of 36 hours is below 48 and a resubmission is simply another run of the same process.
+  C. The SLA becomes fully guaranteed if you move to one submission per day, because each document then gets exactly one pass and the schedule is easier to operate.
+  D. The SLA is violated even for first-pass results, because up to 12 hours of waiting plus up to 24 hours of processing is more than the 24-hour processing limit.
+KEY: A
+WHY: Worst-case latency is the wait for the next submission slot plus the 24-hour processing window. A resubmission adds another wait and another window after the first result is known: up to 36 + 12 + 24 = 72 hours. Guarantees for retried documents therefore need a shorter interval, a retry budget in the SLA, or a different handling path for failures.
+  expl A [OK]: Correct. The retry repeats both the wait for the next slot and the processing window.
+  expl B [no]: A resubmission restarts the wait and the processing window on top of the time already spent, so the total can exceed 48 hours.
+  expl C [no]: Failed documents still need a resubmission, and a daily schedule leaves no margin: the first pass alone can already take 48 hours.
+  expl D [no]: The SLA is 48 hours, not 24. The first pass takes at most 36 hours, which is within it.
+
+=== P4-Q57 | S6 | D4 | task 4.3 | F | select 1 ===
+STEM: An invoice's payment status is sometimes unclear from the document (for example, a stamp that is half cut off). The schema's payment_status enum allows only 'paid' and 'unpaid', so the model guesses. What change is best?
+  A. Remove the field and let reviewers read the document to determine status.
+  B. Make the field free text so that the model can describe whatever it sees.
+  C. Add an 'unclear' value to the enum so the model can flag ambiguity instead of guessing.
+  D. Default to 'unpaid' whenever the model is uncertain, so errors err on the cautious side.
+KEY: C
+WHY: Add enum values like 'unclear' for ambiguous cases, and 'other' plus detail fields for extensible categories.
+  expl A [no]: That discards structured data for the many clear cases.
+  expl B [no]: Free text loses the categorical consistency downstream systems need.
+  expl C [OK]: Correct. An explicit escape value prevents forced guesses.
+  expl D [no]: A silent default misrepresents uncertainty as fact.
+
+=== P4-Q58 | S6 | D4 | task 4.4 | F | select 1 ===
+STEM: A Pydantic validator checks that line item totals sum to the invoice total and raises an error with the computed and stated values. What is the best use of that error?
+  A. Include it in a follow-up request together with the document and the failed extraction so the model can correct or flag the discrepancy.
+  B. Discard it and silently replace the stated total with the computed sum so the record always validates.
+  C. Use it to reject the document permanently without any retry or review.
+  D. Log it and accept the record anyway, since the schema itself is valid.
+KEY: A
+WHY: Semantic validation errors from tools like Pydantic should feed validation-retry loops, with specifics appended to the prompt on retry.
+  expl A [OK]: Correct. Specific semantic validation errors guide self-correction.
+  expl B [no]: This hides a possible extraction or document error.
+  expl C [no]: Some discrepancies are fixable by retry or need human review.
+  expl D [no]: A known inconsistency should not pass silently.
+
+=== P4-Q59 | S6 | D5 | task 5.5 | C | select 1 ===
+STEM: The team's validation results: overall field accuracy 96%. By type: typed invoices 99% (80% of volume), receipts 98% (15%), handwritten notes 71% (5%). By field: total 99%, tax amount 88%. They want to cut human review. Which plan is most defensible?
+  A. Keep full review for everything until overall accuracy reaches 100%.
+  B. Automate high-confidence totals on typed invoices and receipts, keep review for handwritten notes and the tax field, and keep sampling the automated stream.
+  C. Automate all fields for all document types because overall accuracy of 96% exceeds the usual bar, and revisit the plan only if complaints arrive from finance.
+  D. Automate all handwritten notes first, since they are the smallest share of volume and therefore low risk.
+KEY: B
+WHY: Aggregate accuracy can mask poor performance on specific document types or fields. Validate accuracy by segment before automating, and keep stratified sampling for ongoing monitoring.
+  expl A [no]: This ignores segments where automation is already reliable.
+  expl B [OK]: Correct. Automation is limited to segments with demonstrated accuracy, and sampling continues.
+  expl C [no]: The aggregate hides weak segments.
+  expl D [no]: Small volume does not mean low error rate, and handwritten notes are the weakest segment.
+
+=== P4-Q60 | S6 | D5 | task 5.6 | I | select 1 ===
+STEM: A vendor re-sends an invoice by email after a first copy was uploaded earlier. The pipeline creates two ledger records for the same invoice number. What is the best design?
+  A. Keep both records and let finance net them out at month-end.
+  B. Ask the model to decide whether two documents are duplicates based on how similar they look.
+  C. Always keep the first record and discard the second document entirely, as it adds nothing new and keeping both would only create clutter in the system later.
+  D. Detect duplicates on a natural key (vendor, invoice number, date), keep one record, and link both source documents to it so provenance is preserved.
+KEY: D
+WHY: Duplicate handling should use deterministic keys, and provenance should be preserved by linking sources, keeping claim-source mappings intact.
+  expl A [no]: Known duplicates would inflate balances until corrected.
+  expl B [no]: Similarity judgment is less reliable than a natural-key check.
+  expl C [no]: Discarding the second document loses its provenance and any corrections it contains.
+  expl D [OK]: Correct. It avoids double-counting while retaining traceability.

@@ -1,0 +1,902 @@
+{
+ "P1-Q01": {
+  "status": "independent review: no defects found"
+ },
+ "P1-Q02": {
+  "status": "revised after independent review"
+ },
+ "P1-Q03": {
+  "status": "independent review: no defects found"
+ },
+ "P1-Q04": {
+  "status": "independent review: no defects found"
+ },
+ "P1-Q05": {
+  "status": "independent review: no defects found"
+ },
+ "P1-Q06": {
+  "status": "independent review: no defects found"
+ },
+ "P1-Q07": {
+  "status": "revised after independent review"
+ },
+ "P1-Q08": {
+  "status": "independent review: no defects found"
+ },
+ "P1-Q09": {
+  "status": "revised after independent review"
+ },
+ "P1-Q10": {
+  "status": "independent review: no defects found"
+ },
+ "P1-Q11": {
+  "status": "independent review: no defects found"
+ },
+ "P1-Q12": {
+  "status": "independent review: no defects found"
+ },
+ "P1-Q13": {
+  "status": "independent review: no defects found"
+ },
+ "P1-Q14": {
+  "status": "independent review: no defects found"
+ },
+ "P1-Q15": {
+  "status": "independent review: no defects found"
+ },
+ "P1-Q16": {
+  "status": "independent review: no defects found"
+ },
+ "P1-Q17": {
+  "status": "independent review: no defects found"
+ },
+ "P1-Q18": {
+  "status": "independent review: no defects found"
+ },
+ "P1-Q19": {
+  "status": "independent review: no defects found"
+ },
+ "P1-Q20": {
+  "status": "independent review: no defects found"
+ },
+ "P1-Q21": {
+  "status": "independent review: no defects found"
+ },
+ "P1-Q22": {
+  "status": "independent review: no defects found"
+ },
+ "P1-Q23": {
+  "status": "independent review: no defects found"
+ },
+ "P1-Q24": {
+  "status": "independent review: no defects found"
+ },
+ "P1-Q25": {
+  "status": "independent review: no defects found"
+ },
+ "P1-Q26": {
+  "status": "revised after independent review"
+ },
+ "P1-Q27": {
+  "status": "independent review: no defects found"
+ },
+ "P1-Q28": {
+  "status": "independent review: no defects found"
+ },
+ "P1-Q29": {
+  "status": "independent review: no defects found"
+ },
+ "P1-Q30": {
+  "status": "independent review: no defects found"
+ },
+ "P1-Q31": {
+  "status": "independent review: no defects found"
+ },
+ "P1-Q32": {
+  "status": "independent review: no defects found"
+ },
+ "P1-Q33": {
+  "status": "independent review: no defects found"
+ },
+ "P1-Q34": {
+  "status": "independent review: no defects found"
+ },
+ "P1-Q35": {
+  "status": "revised after independent review"
+ },
+ "P1-Q36": {
+  "status": "independent review: no defects found"
+ },
+ "P1-Q37": {
+  "status": "independent review: no defects found"
+ },
+ "P1-Q38": {
+  "status": "independent review: no defects found"
+ },
+ "P1-Q39": {
+  "status": "independent review: no defects found"
+ },
+ "P1-Q40": {
+  "status": "independent review: no defects found"
+ },
+ "P1-Q41": {
+  "status": "revised after independent review"
+ },
+ "P1-Q42": {
+  "status": "independent review: no defects found"
+ },
+ "P1-Q43": {
+  "status": "independent review: no defects found"
+ },
+ "P1-Q44": {
+  "status": "independent review: no defects found"
+ },
+ "P1-Q45": {
+  "status": "independent review: no defects found"
+ },
+ "P1-Q46": {
+  "status": "independent review: no defects found"
+ },
+ "P1-Q47": {
+  "status": "independent review: no defects found"
+ },
+ "P1-Q48": {
+  "status": "independent review: no defects found"
+ },
+ "P1-Q49": {
+  "status": "independent review: no defects found"
+ },
+ "P1-Q50": {
+  "status": "independent review: no defects found"
+ },
+ "P1-Q51": {
+  "status": "independent review: no defects found"
+ },
+ "P1-Q52": {
+  "status": "independent review: no defects found"
+ },
+ "P1-Q53": {
+  "status": "independent review: no defects found"
+ },
+ "P1-Q54": {
+  "status": "independent review: no defects found"
+ },
+ "P1-Q55": {
+  "status": "independent review: no defects found"
+ },
+ "P1-Q56": {
+  "status": "independent review: no defects found"
+ },
+ "P1-Q57": {
+  "status": "independent review: no defects found"
+ },
+ "P1-Q58": {
+  "status": "independent review: no defects found"
+ },
+ "P1-Q59": {
+  "status": "independent review: no defects found"
+ },
+ "P1-Q60": {
+  "status": "independent review: no defects found"
+ },
+ "P2-Q01": {
+  "status": "independent review: no defects found"
+ },
+ "P2-Q02": {
+  "status": "independent review: no defects found"
+ },
+ "P2-Q03": {
+  "status": "independent review: no defects found"
+ },
+ "P2-Q04": {
+  "status": "independent review: no defects found"
+ },
+ "P2-Q05": {
+  "status": "independent review: no defects found"
+ },
+ "P2-Q06": {
+  "status": "independent review: no defects found"
+ },
+ "P2-Q07": {
+  "status": "independent review: no defects found"
+ },
+ "P2-Q08": {
+  "status": "independent review: no defects found"
+ },
+ "P2-Q09": {
+  "status": "independent review: no defects found"
+ },
+ "P2-Q10": {
+  "status": "revised after independent review"
+ },
+ "P2-Q11": {
+  "status": "independent review: no defects found"
+ },
+ "P2-Q12": {
+  "status": "revised after independent review"
+ },
+ "P2-Q13": {
+  "status": "independent review: no defects found"
+ },
+ "P2-Q14": {
+  "status": "independent review: no defects found"
+ },
+ "P2-Q15": {
+  "status": "independent review: no defects found"
+ },
+ "P2-Q16": {
+  "status": "independent review: no defects found"
+ },
+ "P2-Q17": {
+  "status": "independent review: no defects found"
+ },
+ "P2-Q18": {
+  "status": "independent review: no defects found"
+ },
+ "P2-Q19": {
+  "status": "independent review: no defects found"
+ },
+ "P2-Q20": {
+  "status": "independent review: no defects found"
+ },
+ "P2-Q21": {
+  "status": "independent review: no defects found"
+ },
+ "P2-Q22": {
+  "status": "independent review: no defects found"
+ },
+ "P2-Q23": {
+  "status": "independent review: no defects found"
+ },
+ "P2-Q24": {
+  "status": "independent review: no defects found"
+ },
+ "P2-Q25": {
+  "status": "independent review: no defects found"
+ },
+ "P2-Q26": {
+  "status": "independent review: no defects found"
+ },
+ "P2-Q27": {
+  "status": "revised after independent review"
+ },
+ "P2-Q28": {
+  "status": "independent review: no defects found"
+ },
+ "P2-Q29": {
+  "status": "independent review: no defects found"
+ },
+ "P2-Q30": {
+  "status": "independent review: no defects found"
+ },
+ "P2-Q31": {
+  "status": "independent review: no defects found"
+ },
+ "P2-Q32": {
+  "status": "independent review: no defects found"
+ },
+ "P2-Q33": {
+  "status": "independent review: no defects found"
+ },
+ "P2-Q34": {
+  "status": "independent review: no defects found"
+ },
+ "P2-Q35": {
+  "status": "independent review: no defects found"
+ },
+ "P2-Q36": {
+  "status": "independent review: no defects found"
+ },
+ "P2-Q37": {
+  "status": "independent review: no defects found"
+ },
+ "P2-Q38": {
+  "status": "independent review: no defects found"
+ },
+ "P2-Q39": {
+  "status": "independent review: no defects found"
+ },
+ "P2-Q40": {
+  "status": "independent review: no defects found"
+ },
+ "P2-Q41": {
+  "status": "independent review: no defects found"
+ },
+ "P2-Q42": {
+  "status": "revised after independent review"
+ },
+ "P2-Q43": {
+  "status": "independent review: no defects found"
+ },
+ "P2-Q44": {
+  "status": "independent review: no defects found"
+ },
+ "P2-Q45": {
+  "status": "independent review: no defects found"
+ },
+ "P2-Q46": {
+  "status": "independent review: no defects found"
+ },
+ "P2-Q47": {
+  "status": "independent review: no defects found"
+ },
+ "P2-Q48": {
+  "status": "independent review: no defects found"
+ },
+ "P2-Q49": {
+  "status": "independent review: no defects found"
+ },
+ "P2-Q50": {
+  "status": "revised after independent review"
+ },
+ "P2-Q51": {
+  "status": "independent review: no defects found"
+ },
+ "P2-Q52": {
+  "status": "revised after independent review"
+ },
+ "P2-Q53": {
+  "status": "independent review: no defects found"
+ },
+ "P2-Q54": {
+  "status": "independent review: no defects found"
+ },
+ "P2-Q55": {
+  "status": "independent review: no defects found"
+ },
+ "P2-Q56": {
+  "status": "independent review: no defects found"
+ },
+ "P2-Q57": {
+  "status": "independent review: no defects found"
+ },
+ "P2-Q58": {
+  "status": "independent review: no defects found"
+ },
+ "P2-Q59": {
+  "status": "independent review: no defects found"
+ },
+ "P2-Q60": {
+  "status": "independent review: no defects found"
+ },
+ "P3-Q01": {
+  "status": "independent review: no defects found"
+ },
+ "P3-Q02": {
+  "status": "independent review: no defects found"
+ },
+ "P3-Q03": {
+  "status": "independent review: no defects found"
+ },
+ "P3-Q04": {
+  "status": "independent review: no defects found"
+ },
+ "P3-Q05": {
+  "status": "independent review: no defects found"
+ },
+ "P3-Q06": {
+  "status": "independent review: no defects found"
+ },
+ "P3-Q07": {
+  "status": "independent review: no defects found"
+ },
+ "P3-Q08": {
+  "status": "independent review: no defects found"
+ },
+ "P3-Q09": {
+  "status": "independent review: no defects found"
+ },
+ "P3-Q10": {
+  "status": "independent review: no defects found"
+ },
+ "P3-Q11": {
+  "status": "independent review: no defects found"
+ },
+ "P3-Q12": {
+  "status": "independent review: no defects found"
+ },
+ "P3-Q13": {
+  "status": "independent review: no defects found"
+ },
+ "P3-Q14": {
+  "status": "independent review: no defects found"
+ },
+ "P3-Q15": {
+  "status": "independent review: no defects found"
+ },
+ "P3-Q16": {
+  "status": "independent review: no defects found"
+ },
+ "P3-Q17": {
+  "status": "revised after independent review"
+ },
+ "P3-Q18": {
+  "status": "independent review: no defects found"
+ },
+ "P3-Q19": {
+  "status": "independent review: no defects found"
+ },
+ "P3-Q20": {
+  "status": "independent review: no defects found"
+ },
+ "P3-Q21": {
+  "status": "independent review: no defects found"
+ },
+ "P3-Q22": {
+  "status": "independent review: no defects found"
+ },
+ "P3-Q23": {
+  "status": "revised after independent review"
+ },
+ "P3-Q24": {
+  "status": "independent review: no defects found"
+ },
+ "P3-Q25": {
+  "status": "independent review: no defects found"
+ },
+ "P3-Q26": {
+  "status": "independent review: no defects found"
+ },
+ "P3-Q27": {
+  "status": "independent review: no defects found"
+ },
+ "P3-Q28": {
+  "status": "independent review: no defects found"
+ },
+ "P3-Q29": {
+  "status": "independent review: no defects found"
+ },
+ "P3-Q30": {
+  "status": "revised after independent review"
+ },
+ "P3-Q31": {
+  "status": "independent review: no defects found"
+ },
+ "P3-Q32": {
+  "status": "independent review: no defects found"
+ },
+ "P3-Q33": {
+  "status": "independent review: no defects found"
+ },
+ "P3-Q34": {
+  "status": "independent review: no defects found"
+ },
+ "P3-Q35": {
+  "status": "independent review: no defects found"
+ },
+ "P3-Q36": {
+  "status": "independent review: no defects found"
+ },
+ "P3-Q37": {
+  "status": "independent review: no defects found"
+ },
+ "P3-Q38": {
+  "status": "independent review: no defects found"
+ },
+ "P3-Q39": {
+  "status": "revised after independent review"
+ },
+ "P3-Q40": {
+  "status": "independent review: no defects found"
+ },
+ "P3-Q41": {
+  "status": "independent review: no defects found"
+ },
+ "P3-Q42": {
+  "status": "independent review: no defects found"
+ },
+ "P3-Q43": {
+  "status": "independent review: no defects found"
+ },
+ "P3-Q44": {
+  "status": "independent review: no defects found"
+ },
+ "P3-Q45": {
+  "status": "independent review: no defects found"
+ },
+ "P3-Q46": {
+  "status": "independent review: no defects found"
+ },
+ "P3-Q47": {
+  "status": "independent review: no defects found"
+ },
+ "P3-Q48": {
+  "status": "independent review: no defects found"
+ },
+ "P3-Q49": {
+  "status": "revised after independent review"
+ },
+ "P3-Q50": {
+  "status": "independent review: no defects found"
+ },
+ "P3-Q51": {
+  "status": "independent review: no defects found"
+ },
+ "P3-Q52": {
+  "status": "revised after independent review"
+ },
+ "P3-Q53": {
+  "status": "independent review: no defects found"
+ },
+ "P3-Q54": {
+  "status": "independent review: no defects found"
+ },
+ "P3-Q55": {
+  "status": "independent review: no defects found"
+ },
+ "P3-Q56": {
+  "status": "independent review: no defects found"
+ },
+ "P3-Q57": {
+  "status": "independent review: no defects found"
+ },
+ "P3-Q58": {
+  "status": "independent review: no defects found"
+ },
+ "P3-Q59": {
+  "status": "independent review: no defects found"
+ },
+ "P3-Q60": {
+  "status": "independent review: no defects found"
+ },
+ "P4-Q01": {
+  "status": "independent review: no defects found"
+ },
+ "P4-Q02": {
+  "status": "revised after independent review"
+ },
+ "P4-Q03": {
+  "status": "independent review: no defects found"
+ },
+ "P4-Q04": {
+  "status": "independent review: no defects found"
+ },
+ "P4-Q05": {
+  "status": "independent review: no defects found"
+ },
+ "P4-Q06": {
+  "status": "independent review: no defects found"
+ },
+ "P4-Q07": {
+  "status": "independent review: no defects found"
+ },
+ "P4-Q08": {
+  "status": "revised after independent review"
+ },
+ "P4-Q09": {
+  "status": "independent review: no defects found"
+ },
+ "P4-Q10": {
+  "status": "independent review: no defects found"
+ },
+ "P4-Q11": {
+  "status": "independent review: no defects found"
+ },
+ "P4-Q12": {
+  "status": "independent review: no defects found"
+ },
+ "P4-Q13": {
+  "status": "independent review: no defects found"
+ },
+ "P4-Q14": {
+  "status": "independent review: no defects found"
+ },
+ "P4-Q15": {
+  "status": "independent review: no defects found"
+ },
+ "P4-Q16": {
+  "status": "independent review: no defects found"
+ },
+ "P4-Q17": {
+  "status": "independent review: no defects found"
+ },
+ "P4-Q18": {
+  "status": "independent review: no defects found"
+ },
+ "P4-Q19": {
+  "status": "independent review: no defects found"
+ },
+ "P4-Q20": {
+  "status": "revised after independent review"
+ },
+ "P4-Q21": {
+  "status": "revised after independent review"
+ },
+ "P4-Q22": {
+  "status": "independent review: no defects found"
+ },
+ "P4-Q23": {
+  "status": "revised after independent review"
+ },
+ "P4-Q24": {
+  "status": "independent review: no defects found"
+ },
+ "P4-Q25": {
+  "status": "independent review: no defects found"
+ },
+ "P4-Q26": {
+  "status": "independent review: no defects found"
+ },
+ "P4-Q27": {
+  "status": "independent review: no defects found"
+ },
+ "P4-Q28": {
+  "status": "independent review: no defects found"
+ },
+ "P4-Q29": {
+  "status": "independent review: no defects found"
+ },
+ "P4-Q30": {
+  "status": "independent review: no defects found"
+ },
+ "P4-Q31": {
+  "status": "independent review: no defects found"
+ },
+ "P4-Q32": {
+  "status": "independent review: no defects found"
+ },
+ "P4-Q33": {
+  "status": "independent review: no defects found"
+ },
+ "P4-Q34": {
+  "status": "independent review: no defects found"
+ },
+ "P4-Q35": {
+  "status": "independent review: no defects found"
+ },
+ "P4-Q36": {
+  "status": "independent review: no defects found"
+ },
+ "P4-Q37": {
+  "status": "independent review: no defects found"
+ },
+ "P4-Q38": {
+  "status": "independent review: no defects found"
+ },
+ "P4-Q39": {
+  "status": "revised after independent review"
+ },
+ "P4-Q40": {
+  "status": "independent review: no defects found"
+ },
+ "P4-Q41": {
+  "status": "independent review: no defects found"
+ },
+ "P4-Q42": {
+  "status": "independent review: no defects found"
+ },
+ "P4-Q43": {
+  "status": "independent review: no defects found"
+ },
+ "P4-Q44": {
+  "status": "independent review: no defects found"
+ },
+ "P4-Q45": {
+  "status": "independent review: no defects found"
+ },
+ "P4-Q46": {
+  "status": "independent review: no defects found"
+ },
+ "P4-Q47": {
+  "status": "independent review: no defects found"
+ },
+ "P4-Q48": {
+  "status": "independent review: no defects found"
+ },
+ "P4-Q49": {
+  "status": "independent review: no defects found"
+ },
+ "P4-Q50": {
+  "status": "independent review: no defects found"
+ },
+ "P4-Q51": {
+  "status": "independent review: no defects found"
+ },
+ "P4-Q52": {
+  "status": "independent review: no defects found"
+ },
+ "P4-Q53": {
+  "status": "revised after independent review"
+ },
+ "P4-Q54": {
+  "status": "independent review: no defects found"
+ },
+ "P4-Q55": {
+  "status": "independent review: no defects found"
+ },
+ "P4-Q56": {
+  "status": "independent review: no defects found"
+ },
+ "P4-Q57": {
+  "status": "independent review: no defects found"
+ },
+ "P4-Q58": {
+  "status": "independent review: no defects found"
+ },
+ "P4-Q59": {
+  "status": "independent review: no defects found"
+ },
+ "P4-Q60": {
+  "status": "independent review: no defects found"
+ },
+ "P5-Q01": {
+  "status": "independent review: no defects found"
+ },
+ "P5-Q02": {
+  "status": "independent review: no defects found"
+ },
+ "P5-Q03": {
+  "status": "independent review: no defects found"
+ },
+ "P5-Q04": {
+  "status": "independent review: no defects found"
+ },
+ "P5-Q05": {
+  "status": "independent review: no defects found"
+ },
+ "P5-Q06": {
+  "status": "independent review: no defects found"
+ },
+ "P5-Q07": {
+  "status": "independent review: no defects found"
+ },
+ "P5-Q08": {
+  "status": "independent review: no defects found"
+ },
+ "P5-Q09": {
+  "status": "independent review: no defects found"
+ },
+ "P5-Q10": {
+  "status": "independent review: no defects found"
+ },
+ "P5-Q11": {
+  "status": "independent review: no defects found"
+ },
+ "P5-Q12": {
+  "status": "revised after independent review"
+ },
+ "P5-Q13": {
+  "status": "independent review: no defects found"
+ },
+ "P5-Q14": {
+  "status": "independent review: no defects found"
+ },
+ "P5-Q15": {
+  "status": "independent review: no defects found"
+ },
+ "P5-Q16": {
+  "status": "revised after independent review"
+ },
+ "P5-Q17": {
+  "status": "independent review: no defects found"
+ },
+ "P5-Q18": {
+  "status": "independent review: no defects found"
+ },
+ "P5-Q19": {
+  "status": "independent review: no defects found"
+ },
+ "P5-Q20": {
+  "status": "independent review: no defects found"
+ },
+ "P5-Q21": {
+  "status": "independent review: no defects found"
+ },
+ "P5-Q22": {
+  "status": "independent review: no defects found"
+ },
+ "P5-Q23": {
+  "status": "independent review: no defects found"
+ },
+ "P5-Q24": {
+  "status": "independent review: no defects found"
+ },
+ "P5-Q25": {
+  "status": "independent review: no defects found"
+ },
+ "P5-Q26": {
+  "status": "independent review: no defects found"
+ },
+ "P5-Q27": {
+  "status": "independent review: no defects found"
+ },
+ "P5-Q28": {
+  "status": "independent review: no defects found"
+ },
+ "P5-Q29": {
+  "status": "independent review: no defects found"
+ },
+ "P5-Q30": {
+  "status": "independent review: no defects found"
+ },
+ "P5-Q31": {
+  "status": "independent review: no defects found"
+ },
+ "P5-Q32": {
+  "status": "independent review: no defects found"
+ },
+ "P5-Q33": {
+  "status": "independent review: no defects found"
+ },
+ "P5-Q34": {
+  "status": "independent review: no defects found"
+ },
+ "P5-Q35": {
+  "status": "independent review: no defects found"
+ },
+ "P5-Q36": {
+  "status": "independent review: no defects found"
+ },
+ "P5-Q37": {
+  "status": "revised after independent review"
+ },
+ "P5-Q38": {
+  "status": "revised after independent review"
+ },
+ "P5-Q39": {
+  "status": "independent review: no defects found"
+ },
+ "P5-Q40": {
+  "status": "independent review: no defects found"
+ },
+ "P5-Q41": {
+  "status": "independent review: no defects found"
+ },
+ "P5-Q42": {
+  "status": "independent review: no defects found"
+ },
+ "P5-Q43": {
+  "status": "revised after independent review"
+ },
+ "P5-Q44": {
+  "status": "independent review: no defects found"
+ },
+ "P5-Q45": {
+  "status": "independent review: no defects found"
+ },
+ "P5-Q46": {
+  "status": "independent review: no defects found"
+ },
+ "P5-Q47": {
+  "status": "independent review: no defects found"
+ },
+ "P5-Q48": {
+  "status": "independent review: no defects found"
+ },
+ "P5-Q49": {
+  "status": "independent review: no defects found"
+ },
+ "P5-Q50": {
+  "status": "independent review: no defects found"
+ },
+ "P5-Q51": {
+  "status": "independent review: no defects found"
+ },
+ "P5-Q52": {
+  "status": "independent review: no defects found"
+ },
+ "P5-Q53": {
+  "status": "independent review: no defects found"
+ },
+ "P5-Q54": {
+  "status": "independent review: no defects found"
+ },
+ "P5-Q55": {
+  "status": "independent review: no defects found"
+ },
+ "P5-Q56": {
+  "status": "independent review: no defects found"
+ },
+ "P5-Q57": {
+  "status": "independent review: no defects found"
+ },
+ "P5-Q58": {
+  "status": "revised after independent review"
+ },
+ "P5-Q59": {
+  "status": "independent review: no defects found"
+ },
+ "P5-Q60": {
+  "status": "independent review: no defects found"
+ }
+}

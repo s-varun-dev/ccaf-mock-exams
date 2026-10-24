@@ -1,0 +1,793 @@
+=== P1-Q01 | S1 | D1 | task 1.7 | I | select 1 ===
+STEM: A support agent resumes a named session two days later when a customer returns about order #55120. The saved history contains a lookup_order result showing the order as 'processing'. Since then the warehouse shipped it, but the resumed agent tells the customer the order has not shipped yet. The reply is well formed and polite, but it is wrong. What is the most reliable way to prevent this?
+  A. Start a new session seeded with a structured summary of confirmed case facts, and call lookup_order again for current order state.
+  B. Fork the session with fork_session and ask the forked branch to answer from the saved analysis without further tool calls.
+  C. Switch to a model with a larger context window so that the newest user message outweighs older tool output in the history.
+  D. Resume the same session and add a system prompt line saying that earlier tool results may be outdated and should be treated cautiously.
+KEY: A
+WHY: When most of what a session remembers is tool output that can change (order status, shipment state), resuming it carries stale facts forward. The guide's guidance is that starting a new session with a structured summary is more reliable than resuming with stale tool results. The summary keeps durable facts (customer ID, order number, what the customer asked for) and the agent re-queries volatile state before answering.
+  expl A [OK]: Correct. Prior tool results are stale, so a fresh session with an injected summary of durable facts plus a live lookup gives the agent accurate state.
+  expl B [no]: A fork starts from the same history, including the stale result. Forking is for exploring divergent approaches, not for refreshing outdated data.
+  expl C [no]: Context size does not change which facts are true. Older tool results do not become less influential simply because the window is larger.
+  expl D [no]: The stale 'processing' result remains in context and the model must guess which earlier results to distrust. A caution line is probabilistic and does not refresh the data.
+
+=== P1-Q02 | S1 | D1 | task 1.4 | I | select 1 ===
+STEM: Logs show the agent correctly calls get_customer and receives verified customer ID C-1042. The caller then asks for a refund on order #88231, and the agent calls process_refund for it. An audit later finds order #88231 belongs to customer C-7710. The team already has a hook that blocks process_refund until get_customer has succeeded in the session. What change best closes this gap?
+  A. In a pre-call hook for process_refund, load the order and reject the call unless its customer ID equals the verified customer ID for the session.
+  B. Ask the caller to restate the email address on the account before each refund and compare it to the get_customer record in the prompt.
+  C. Update the system prompt to tell the agent that it must confirm an order belongs to the verified customer before issuing a refund.
+  D. Extend the existing prerequisite so it also requires that lookup_order has been called earlier in the session for the same order number before process_refund is allowed to run.
+KEY: A
+WHY: Authentication (who is this person) and authorization (are they allowed to act on this resource) are different checks. The existing gate only proves that authentication happened. A tool-call interception hook for process_refund, or equivalent server-side validation, must compare the order's owner to the verified customer and block mismatches. Doing so deterministically avoids depending on the model's compliance.
+  expl A [OK]: Correct. This enforces authorization (the verified person owns this order) deterministically, at the point the side effect would occur.
+  expl B [no]: Restating an email is another identity check (authentication). The failure here is that a verified identity acted on an order it does not own.
+  expl C [no]: This relies on the model remembering to perform the check every time. Financial side effects need a guarantee, and prompts have a non-zero failure rate.
+  expl D [no]: Calling lookup_order only proves the order exists. It does not prove that the verified customer owns it, so the unauthorized refund still passes.
+
+=== P1-Q03 | S1 | D1 | task 1.1 | C | select 1 ===
+STEM: A developer wrote the agent loop to stop as soon as the assistant message contains any text block, and also caps the loop at 5 iterations. Customers sometimes see only 'Let me check that order for you' and nothing happens. Some complex billing disputes end abruptly after the fifth iteration with no resolution. Which redesign best fixes both symptoms?
+  A. Keep the text check, but instruct the model never to write any text before calling a tool, so that the first text block it produces always signals the final answer to the customer.
+  B. Continue while stop_reason is 'tool_use', run the tools and append their results, finish on 'end_turn', and keep an iteration limit only as an escalating backstop.
+  C. Replace the loop with a fixed sequence of get_customer, lookup_order, then process_refund so each request runs the same three steps.
+  D. Raise the iteration cap to 25 and also stop the loop when the response includes a phrase such as 'I have completed your request'.
+KEY: B
+WHY: The loop should be driven by the API's stop_reason: when it is 'tool_use', run the requested tools, append the tool_result blocks to the conversation, and call the model again; when it is 'end_turn', return the final response. Assistant text can accompany tool_use, so checking for text ends the loop too early. A hard cap used as the main terminator cuts off legitimate multi-step cases; it belongs only as a safety backstop, ideally escalating to a human when reached.
+  expl A [no]: This still treats assistant text as a completion indicator and depends on the model obeying a prompt rule. Text can legitimately appear alongside tool_use blocks.
+  expl B [OK]: Correct. The stop_reason is the authoritative signal. A backstop that escalates handles runaway loops without being the normal way the loop ends.
+  expl C [no]: A fixed sequence removes model-driven decisions, so account issues and disputes that need other steps cannot be handled, and it still has no correct termination logic.
+  expl D [no]: Parsing natural-language phrases for termination is brittle, and a larger cap is still an arbitrary number acting as the primary stopping rule.
+
+=== P1-Q04 | S1 | D1 | task 1.5 | I | select 1 ===
+STEM: The agent evaluates a 30-day return window using data from three MCP tools: get_customer returns account creation as a Unix timestamp, lookup_order returns ISO 8601 dates, and a legacy billing tool returns payment status as numeric codes (1, 2, 3). The agent sometimes miscalculates eligibility and misreads billing status. What is the most robust fix?
+  A. Describe the conversion formula for Unix timestamps and the meaning of each numeric status code in the system prompt, and ask the agent to convert every value before it reasons about eligibility.
+  B. Lengthen each tool's description to explain the format of its output fields so the model knows how to interpret each response.
+  C. Add a convert_timestamp tool and instruct the agent to call it whenever a date appears in any tool result.
+  D. Add a PostToolUse hook that converts all dates to one format and maps numeric status codes to labeled values before the model sees any tool result.
+KEY: D
+WHY: PostToolUse hooks intercept tool results before the model processes them, which makes them the right place to normalize timestamps and status codes. The model then compares dates in one format and reads labeled statuses, and the transformation is guaranteed rather than requested.
+  expl A [no]: The model must then perform conversions on every call, and any lapse produces wrong eligibility decisions. It is probabilistic where the problem needs determinism.
+  expl B [no]: Better descriptions help selection and interpretation, but they still leave the arithmetic and mapping to the model on every call.
+  expl C [no]: This adds extra tool calls, tokens, and more chances to skip a call. The normalization is mechanical and should not depend on model initiative.
+  expl D [OK]: Correct. A hook normalizes heterogeneous results deterministically, so the model always reasons over consistent data.
+
+=== P1-Q05 | S1 | D1 | task 1.6 | C | select 1 ===
+STEM: A customer writes one message: they want to return a blender from order #4410, dispute a $39 charge that appears tied to the same order, and update a shipping address. The return refund affects the amount that is actually in dispute. Which design resolves the message quickly while avoiding duplicate or conflicting refunds?
+  A. Process the concerns strictly in the order mentioned, starting each from a clean context so earlier issues cannot influence later ones.
+  B. Launch three isolated subagents that each handle one concern end to end, including calling process_refund if their analysis supports it.
+  C. Escalate the entire message to a human agent because it contains several issues and one of them involves money.
+  D. Split the message into three concerns, run read-only investigation for them in parallel from shared verified-customer and order facts, reconcile the findings, then execute any refund once.
+KEY: D
+WHY: The guide describes decomposing multi-concern requests into distinct items and investigating them in parallel using shared context before synthesizing a unified resolution. Because the return and dispute interact, the side effect (the refund) must happen once, after the facts are reconciled. Reads can be parallel; writes need coordination.
+  expl A [no]: This is slower and discards the shared facts that matter. The later dispute depends on what happened with the return.
+  expl B [no]: Isolated agents do not share facts. The return and the dispute concern the same charge, so both could issue refunds for it.
+  expl C [no]: Multi-concern requests are within the agent's remit. Escalating reduces first-contact resolution when the issues can be resolved with the available tools.
+  expl D [OK]: Correct. It parallelizes the safe, independent lookups, preserves shared context, and makes the one side-effect decision after the interacting facts are combined.
+
+=== P1-Q06 | S1 | D1 | task 1.4 | F | select 1 ===
+STEM: The agent calls escalate_to_human with the note: 'Customer is upset, please help.' Human agents work in a separate ticketing system and cannot see the agent's conversation transcript. They must ask the customer to start over. What should the agent include to fix this?
+  A. A structured handoff summary with customer ID, root cause, refund amount involved, and the recommended next action.
+  B. Only the customer's name, with an instruction for the human agent to find the case in the CRM by searching that name.
+  C. A message asking the customer to describe the problem again to the human agent when the connection is made.
+  D. The full raw conversation text and every tool output pasted into the escalation note as one large block, so the human agent has complete information available to search through.
+KEY: A
+WHY: Humans who lack transcript access depend on the handoff summary. The guide specifies compiling structured summaries (customer ID, root cause, refund amount, recommended action) when escalating mid-process so the human can resolve the case without re-investigating.
+  expl A [OK]: Correct. The human can act immediately without the transcript.
+  expl B [no]: Names are often ambiguous (multiple matches), and it still omits the cause, amounts, and recommendation.
+  expl C [no]: That recreates the exact problem: the customer repeats themselves and context is lost.
+  expl D [no]: This buries the key facts in noise and includes sensitive or irrelevant data. A focused summary is easier to act on.
+
+=== P1-Q07 | S1 | D1 | task 1.7 | I | select 1 ===
+STEM: A support lead wants to compare two resolutions for a complex disputed order, a full refund versus store credit plus a partial refund. Both should start from the same completed investigation of the order history. A prototype lets both branches call process_refund while exploring. What approach is best?
+  A. Run strategy one in the current session and then instruct the agent to disregard it and try strategy two in the same session.
+  B. Fork the session and let both branches execute their own resolution against the customer's order, then issue a compensating adjustment to reverse whichever one the lead does not choose.
+  C. Use fork_session for two branches from the shared investigation; each drafts a resolution without executing refunds, and only the chosen resolution is executed, once.
+  D. Resume the same named session in two terminals with --resume and let each terminal pursue a different resolution.
+KEY: C
+WHY: fork_session creates independent branches from a shared baseline so divergent approaches can be explored without contaminating each other. Because process_refund is a side effect, exploration should be draft-only, with execution happening once after a decision.
+  expl A [no]: The first strategy remains in context and biases the second, and any executed refund stays executed.
+  expl B [no]: Executing both creates real side effects and customer-visible actions that may not be cleanly reversible.
+  expl C [OK]: Correct. Forks share the baseline, and keeping branches draft-only prevents duplicate or conflicting refunds.
+  expl D [no]: Both processes continue the same conversation lineage rather than creating independent branches, and each may execute actions.
+
+=== P1-Q08 | S1 | D2 | task 2.1 | I | select 1 ===
+STEM: After a prompt update, the agent started calling lookup_invoice for nearly every message that mentions money, including 'I was charged for an order that never arrived', and never checks delivery status. The new system prompt contains the rule: 'For any message mentioning a charge, payment, or price, use lookup_invoice.' Tool descriptions for lookup_invoice and lookup_order are both clear and distinct. What is the best fix?
+  A. Remove the keyword-triggered routing rule from the system prompt and rely on the tool descriptions, which already state each tool's inputs and boundaries.
+  B. Merge lookup_invoice and lookup_order into a single lookup_record tool so there is no routing decision to make.
+  C. Set tool_choice to force lookup_invoice on every turn so the behavior at least becomes predictable for billing messages.
+  D. Add more keywords such as 'shipped', 'delivery', and 'tracking' to the prompt rule and map them to lookup_order, so that delivery questions are routed to the right tool.
+KEY: A
+WHY: Tool descriptions are the main mechanism the model uses to choose tools, but system prompt wording can override them. Keyword-sensitive instructions (here 'charge' maps to lookup_invoice) create unintended tool associations. The fix is to remove or rewrite the keyword rule rather than pile on more.
+  expl A [OK]: Correct. The keyword rule overrides well-written descriptions and creates an unintended association between 'charge' and one tool.
+  expl B [no]: Merging hides two different backends behind one interface and discards the clear descriptions that were working. The root cause is the prompt rule.
+  expl C [no]: Forcing one tool on every turn prevents the agent from ever using lookup_order or answering, and it treats a prompt wording problem as a configuration problem.
+  expl D [no]: This extends a brittle keyword scheme. Mixed messages such as the charge-for-undelivered-order case will still match whichever rule the model weighs most.
+
+=== P1-Q09 | S1 | D2 | task 2.4 | I | select 1 ===
+STEM: Your support-engineering team uses Claude Code while developing against the company's MCP servers for get_customer, lookup_order, process_refund, and escalate_to_human. Every engineer needs these servers when they clone the repository, but the CRM token must not be committed. One engineer also wants to try an experimental MCP server that only they will use. How should you configure this?
+  A. Commit .mcp.json with the literal token because the repository is private, and tell the experimenting engineer to edit the same file locally.
+  B. Write the shared server definitions and the literal token in CLAUDE.md so Claude Code reads them at the start of each session.
+  C. Put the shared servers in the project's .mcp.json using ${CRM_API_TOKEN} environment variable expansion, and add the experimental server to the engineer's user-scoped ~/.claude.json.
+  D. Ask each engineer to add all servers, including the shared ones, to their own ~/.claude.json using a token from the team password manager.
+KEY: C
+WHY: MCP server scope matters: project-level .mcp.json is for shared team tooling and supports environment variable expansion such as ${GITHUB_TOKEN}-style references so credentials stay out of version control. User-level ~/.claude.json holds personal or experimental servers. All configured servers' tools are available simultaneously.
+  expl A [no]: A private repository still exposes the secret to everyone with access and its history, and local edits to a shared file risk accidental commits.
+  expl B [no]: CLAUDE.md holds instructions and context, not MCP server configuration, and it would commit a secret in plain text.
+  expl C [OK]: Correct. Project scope is shared through version control, expansion keeps secrets out of the file, and user scope keeps the experiment personal.
+  expl D [no]: This works but is not shared via version control. New engineers must replicate the setup manually and configurations drift.
+
+=== P1-Q10 | S1 | D2 | task 2.3 | I | select 1 ===
+STEM: To avoid creating multiple agents, a team gave its single support agent 18 tools: the four support tools plus administrative tools such as delete_account, adjust_price_list, bulk_credit, and export_customers. In testing the agent sometimes picks a similar administrative tool for ordinary requests, and administrative actions need staff approval anyway. What is the best change?
+  A. Set tool_choice to 'any' so the model must call one of the 18 tools on every turn, which reduces conversational mistakes.
+  B. Add a second model that reviews each tool call and vetoes administrative calls, while keeping the full tool list for the main agent.
+  C. Keep all 18 tools and add a prompt paragraph explaining which tools are reserved for staff, with a firm warning that the agent must never call them even when a customer asks directly.
+  D. Give the resolution agent only the four support tools; keep administrative capabilities out of its tool set and reachable only through escalate_to_human and staff tooling.
+KEY: D
+WHY: Giving an agent far more tools than it needs degrades selection reliability and increases misuse risk. The guide describes scoping each agent to the tools it needs, with limited cross-role tools for high-frequency needs. Administrative actions that require human approval belong behind the escalation path, not in the resolution agent's tool list.
+  expl A [no]: tool_choice 'any' only guarantees that some tool is called. It does nothing to prevent the wrong tool, and it forces calls on turns that need none.
+  expl B [no]: This adds latency and cost and relies on another probabilistic check, when removing unnecessary tools solves the problem directly.
+  expl C [no]: Large tool sets raise selection difficulty, and prompt warnings leave destructive tools callable. Compliance is probabilistic.
+  expl D [OK]: Correct. A small, role-specific tool set improves selection and applies least privilege.
+
+=== P1-Q11 | S1 | D2 | task 2.2 | I | select 1 ===
+STEM: process_refund currently returns the string 'Operation failed' for three different situations: a gateway timeout, an order ID that does not exist, and a refund amount above the agent's authority. The agent retries all three and sometimes tells customers 'something went wrong on our side' even when the refund exceeds policy. What is the best improvement to the tool?
+  A. Return a verbose stack trace and server log excerpt so the model can work out the cause by reading it.
+  B. Return an MCP error result (isError) with structured metadata: an error category, an isRetryable flag, and a customer-appropriate description.
+  C. Return an empty result for all failures so that the agent treats the refund as pending and tries again later in the conversation.
+  D. Keep the generic message but add a system prompt rule telling the agent to retry any failed refund up to three times with a short delay, and to escalate if it still fails.
+KEY: B
+WHY: The isError pattern lets MCP tools signal failure to the agent. Distinguishing transient, validation, business, and permission errors, and indicating whether each is retryable, enables the right recovery: retry timeouts, fix input errors, and explain or escalate policy failures with a clear customer-friendly message.
+  expl A [no]: Stack traces are noisy and may leak internals. The agent needs a small, stable error contract it can act on.
+  expl B [OK]: Correct. The agent can retry transient failures, correct validation errors, and explain or escalate business-rule failures.
+  expl C [no]: An empty successful result hides the failure and risks telling the customer a refund is coming when it is not.
+  expl D [no]: Retrying a non-existent order or a policy violation cannot succeed, and the agent still cannot tell failure causes apart.
+
+=== P1-Q12 | S1 | D4 | task 4.2 | C | select 1 ===
+STEM: To improve ambiguous-case handling, the team added eight few-shot examples to the system prompt, all of them standard damaged-item refunds with photo evidence. Now the agent also refunds cases that only look similar, such as damage reported 90 days after delivery under a 30-day policy, instead of escalating. Which change best addresses this?
+  A. Add twenty more standard damaged-item examples with photo evidence so the agent sees the refund pattern more often and recognizes eligible cases with higher confidence.
+  B. Remove the examples and add the instruction 'when in doubt, approve the refund to keep customers satisfied'.
+  C. Replace them with a few targeted examples near the decision boundary, each showing why the agent refunded, declined, or escalated instead of the alternative.
+  D. Require the agent to state a confidence score with each decision and refund automatically when the score is above 80 percent.
+KEY: C
+WHY: Few-shot examples are most useful for ambiguous cases when they show the reasoning for choosing one action over plausible alternatives, and they help the model generalize judgment to novel patterns. A set that only shows the typical case teaches the model to pattern-match on surface features.
+  expl A [no]: More of the same pattern strengthens the overgeneralization. The agent needs to see where the pattern stops applying.
+  expl B [no]: That removes the escalation judgment entirely and makes the problem of unauthorized exceptions worse.
+  expl C [OK]: Correct. Contrasting examples with reasoning teach the distinction the agent is currently missing and let it generalize.
+  expl D [no]: Self-reported confidence is poorly calibrated, and the agent is already confidently wrong on these cases.
+
+=== P1-Q13 | S1 | D4 | task 4.1 | I | select 2 ===
+STEM: The refund prompt says 'Be conservative and only approve a refund when you are highly confident it is eligible.' Reviewers see inconsistent decisions on identical situations, especially whether damage 'in transit' qualifies. Select the TWO changes that most directly improve consistency.
+  A. Replace the general instruction with explicit categorical criteria that name which situations are eligible, ineligible, and must be escalated.
+  B. Add concrete examples of each outcome, including borderline damage cases, showing how the criteria apply.
+  C. Tell the agent to think very carefully and double-check each decision before answering.
+  D. Increase max_tokens so the agent has more room to reason about each refund decision.
+  E. Require the agent to approve only when it reports a confidence of at least 90 percent in its decision.
+KEY: AB
+WHY: General instructions such as 'be conservative' do not improve precision the way specific categorical criteria do. Defining what to approve, decline, and escalate, with concrete examples for each, gives consistent classification. Both correct choices make the standard explicit.
+  expl A [OK]: Correct. Specific categories give the model something concrete to apply and audit.
+  expl B [OK]: Correct. Examples anchor the criteria and show boundary handling.
+  expl C [no]: This adds no new information about what the policy requires, so inconsistency is likely to persist.
+  expl D [no]: Output length limits are not the cause of inconsistent criteria.
+  expl E [no]: Confidence thresholds are a vague proxy and self-reported confidence is poorly calibrated. They do not define what counts as eligible.
+
+=== P1-Q14 | S1 | D4 | task 4.1 | I | select 1 ===
+STEM: The agent's case summary panel shows three automatic flags: 'order status verified' (98% accurate), 'billing mismatch detected' (94%), and 'suspected return abuse' (about 45% accurate). Human reviewers now ignore the whole panel, including the accurate flags. Which action best restores trust while the problem is fixed?
+  A. Keep all three flags and add a disclaimer that some flags may be wrong, so reviewers know to verify them.
+  B. Keep all three flags but instruct the model to report only high-confidence findings and to skip anything it is unsure about, so that fewer false flags reach the reviewers' panel.
+  C. Temporarily stop surfacing the 'suspected return abuse' flag, route those cases to a separate review path, and refine its criteria before re-enabling it.
+  D. Increase the number of flags shown per case so reviewers have more signals to compare against each other.
+KEY: C
+WHY: High false positive categories undermine trust in accurate categories. The guide recommends temporarily disabling a noisy category to restore trust while improving its prompt with explicit criteria, rather than relying on general confidence-based filtering.
+  expl A [no]: A disclaimer does not repair the credibility loss, and reviewers will keep ignoring the panel.
+  expl B [no]: A vague confidence filter does not fix the criteria that cause false positives.
+  expl C [OK]: Correct. Removing the noisy category protects trust in the accurate categories while the prompt is improved.
+  expl D [no]: More signals add more noise and do not address the 45% false positive category.
+
+=== P1-Q15 | S1 | D5 | task 5.1 | I | select 3 ===
+STEM: A billing dispute session runs for 25 turns. lookup_order returns 40+ fields, the customer raises three issues, and the agent starts forgetting amounts and order numbers stated earlier. Select the THREE changes that best preserve critical information.
+  A. Spawn a new subagent for every tool call to hold its output so that the main agent's context never contains tool results.
+  B. Trim lookup_order results to the few fields relevant to the return or dispute (for example with a PostToolUse hook) before they accumulate in context.
+  C. Keep a persistent 'case facts' block of amounts, dates, order numbers, and statuses in every prompt, outside summarized history.
+  D. Keep only the last two turns and rely on the model to recall earlier details from its general knowledge.
+  E. Summarize the whole conversation into two sentences every three turns and discard the earlier messages.
+  F. Store structured issue data (order ID, amount, status per issue) in a separate context layer so each concern stays distinct.
+KEY: BCF
+WHY: Three techniques from the guide apply: trim verbose tool outputs to relevant fields, extract transactional facts into a persistent case-facts block outside summarized history, and keep structured per-issue data in a separate layer. Progressive summarization is the very mechanism that loses numbers and dates.
+  expl A [no]: The main agent needs the relevant results to reason, and adding agents per call adds complexity without solving the loss of key facts.
+  expl B [OK]: Correct. Verbose tool output consumes tokens disproportionately to its relevance.
+  expl C [OK]: Correct. Transactional facts are protected from summarization loss.
+  expl D [no]: The model cannot recall session-specific facts it no longer has in context.
+  expl E [no]: Aggressive progressive summarization turns precise numbers and dates into vague statements.
+  expl F [OK]: Correct. Multi-issue sessions need per-issue structured state.
+
+=== P1-Q16 | S1 | D5 | task 5.2 | I | select 1 ===
+STEM: At the start of a chat the customer writes: 'Skip the bot. I want a human agent now.' The agent responds by calling get_customer and lookup_order 'to see if I can quickly fix it' and then offers a solution. The customer replies angrily. What should the agent have done?
+  A. Continue investigating first, because resolving the issue quickly is the best way to satisfy the customer's underlying goal, and a fast fix will probably make the request for a person unnecessary.
+  B. Acknowledge the request and escalate to a human right away, including a handoff summary of what is known so far, without first investigating.
+  C. Run sentiment analysis and escalate only if the customer's frustration score passes a threshold.
+  D. Ask the customer to explain why they want a human, and escalate only if the reason shows the case is complex.
+KEY: B
+WHY: Appropriate escalation triggers include a customer's request for a human, policy exceptions or gaps, and inability to progress. When a customer explicitly demands a human, escalate immediately. The nuance is that if a customer only expresses frustration while the issue is straightforward, the agent can acknowledge and offer resolution.
+  expl A [no]: This overrides a clear customer preference. Offering resolution first is only appropriate when the customer did not demand a human.
+  expl B [OK]: Correct. An explicit request for a human should be honored immediately.
+  expl C [no]: Sentiment is not a reliable proxy for the need to escalate, and here the customer already stated what they want.
+  expl D [no]: Requiring a justification adds friction to an explicit request.
+
+=== P1-Q17 | S1 | D5 | task 5.1 | F | select 1 ===
+STEM: A developer calls the Messages API once per customer turn and sends only the newest user message plus a one-line summary. The agent keeps asking for the order number the customer already gave and repeats the same lookup_order call. The team proposes adding a subagent to hold the conversation memory. What is the better fix?
+  A. Send the complete conversation history on every request, including prior assistant tool_use blocks and the matching tool_result blocks.
+  B. Add a memory subagent that stores the conversation and answers the main agent's questions about what was said earlier.
+  C. Increase the length of the one-line summary so it includes more of what the customer said in earlier turns.
+  D. Instruct the agent in the system prompt to always ask the customer to repeat details so nothing is assumed.
+KEY: A
+WHY: The Messages API does not remember earlier requests. Maintaining conversational coherence requires passing the complete history, including tool_use and tool_result blocks, in each request. A subagent is unnecessary; the problem is missing context, not missing agents.
+  expl A [OK]: Correct. The API is stateless, so coherence depends on passing full history.
+  expl B [no]: This adds an agent boundary and handoff risk to solve a problem that sending the history solves directly.
+  expl C [no]: A hand-written summary is lossy and still omits tool results the agent needs for coherent reasoning.
+  expl D [no]: This makes the experience worse and does not give the model the information it needs.
+
+=== P1-Q18 | S2 | D1 | task 1.6 | I | select 1 ===
+STEM: You are asked to 'add comprehensive tests' to a 200-file legacy service that has almost no tests and unclear module dependencies. Which approach with Claude Code is most likely to produce useful results?
+  A. Generate tests for every file in alphabetical order using the same prompt, so coverage grows predictably, and review the results in batches of twenty files as they finish.
+  B. Map the structure first, identify high-impact and high-risk areas, write a prioritized plan, and adapt the plan as dependencies are discovered.
+  C. Ask for one test suite for the whole service in a single prompt and review the result at the end.
+  D. Test only the public API listed in the README, since internal modules are covered indirectly.
+KEY: B
+WHY: For open-ended tasks, dynamic decomposition works better than a fixed pipeline: first map the codebase, identify high-impact areas, then create a prioritized plan that adapts as dependencies appear. Fixed alphabetical or monolithic approaches cannot respond to what is discovered.
+  expl A [no]: A fixed order ignores risk and dependencies, and it spends effort on low-value files first.
+  expl B [OK]: Correct. Open-ended tasks need an adaptive plan built from what exploration reveals.
+  expl C [no]: A single enormous request overwhelms context and gives no way to prioritize or correct course.
+  expl D [no]: The README may be outdated and internal logic with no coverage is exactly where legacy regressions hide.
+
+=== P1-Q19 | S2 | D2 | task 2.5 | I | select 1 ===
+STEM: Claude Code attempts an Edit on a configuration file that contains twelve identical, auto-generated blocks. The edit fails because the target text matches more than once, and no nearby lines are unique within the file. Claude needs to change only the third block. What is the most reliable next step?
+  A. Run a Bash sed command with a global substitution so every identical block is updated in one pass.
+  B. Read the full file, produce the modified contents with only the third block changed, and write the updated file with Write.
+  C. Use Grep to locate the block and Write only that fragment to the file path.
+  D. Retry the same Edit call several times in case the matching logic picks the right block on a later attempt, since the tool sometimes resolves ties differently between calls.
+KEY: B
+WHY: Edit relies on unique text matching. When the text is not unique and no unique anchor exists, the reliable fallback is to Read the file in full and Write the revised contents. The other approaches either cannot succeed or change too much.
+  expl A [no]: A global substitution changes all twelve blocks, and shell edits bypass the safeguards of the Edit and Write tools.
+  expl B [OK]: Correct. Read plus Write is the documented fallback when Edit cannot find a unique anchor.
+  expl C [no]: Writing a fragment overwrites the file and destroys the other eleven blocks and everything else in it.
+  expl D [no]: The match is ambiguous by construction, so repeating it cannot succeed.
+
+=== P1-Q20 | S2 | D3 | task 3.5 | I | select 2 ===
+STEM: A data migration script written by Claude Code mishandles null values and mixed date formats. You have explained the transformation in prose three times and each attempt is interpreted differently. Select the TWO approaches most likely to fix this.
+  A. Write tests for the expected behavior and edge cases first, then run them and share the failures with Claude to iterate.
+  B. Repeat the same prose instructions in capital letters so the model gives them more weight.
+  C. Provide two or three concrete input and expected output examples, including a null value and each date format.
+  D. Ask Claude to rate its own confidence in the script and ship it if the rating is high.
+  E. Ask Claude to rewrite the whole script from scratch each time until the output looks right.
+KEY: AC
+WHY: When prose descriptions are interpreted inconsistently, concrete input/output examples and test-driven iteration are the effective techniques. Both replace ambiguity with verifiable expectations, including edge cases such as null values.
+  expl A [OK]: Correct. Test-driven iteration gives objective, specific feedback.
+  expl B [no]: Emphasis does not remove ambiguity.
+  expl C [OK]: Correct. Concrete examples communicate the transformation unambiguously when prose is read inconsistently.
+  expl D [no]: Self-reported confidence does not verify behavior on nulls and date formats.
+  expl E [no]: Rewrites discard progress and give no targeted signal about what is wrong.
+
+=== P1-Q21 | S2 | D3 | task 3.2 | I | select 1 ===
+STEM: Your team wants a /map-dependencies command that scans a large repository and produces thousands of lines of analysis. Developers complain that after running it, the main conversation is full of discovery noise and later answers degrade. How should you build it?
+  A. Create an ordinary command in .claude/commands/ that runs the scan and prints the full output into the main conversation.
+  B. Create the command in each developer's ~/.claude/commands/ directory so everyone has the same version locally.
+  C. Add the dependency-mapping instructions to the project CLAUDE.md so they are loaded in every session.
+  D. Create a skill in .claude/skills/ with a SKILL.md that sets context: fork so the analysis runs in an isolated sub-agent context and returns only its result.
+KEY: D
+WHY: Skills in .claude/skills/ support frontmatter such as context: fork, which runs the skill in an isolated sub-agent context so verbose output does not pollute the main session. Project-scoped skills are shared with the team through version control.
+  expl A [no]: This shares the command but keeps the verbose output in the main context, which is the complaint.
+  expl B [no]: User-scoped commands are personal and not shared via version control, and they still run in the main context.
+  expl C [no]: CLAUDE.md is always loaded. It does not run a task, and it would add instructions to every session.
+  expl D [OK]: Correct. context: fork isolates verbose output from the main conversation.
+
+=== P1-Q22 | S2 | D3 | task 3.4 | I | select 2 ===
+STEM: Your team has five upcoming tasks. Select the TWO that most clearly justify starting in plan mode.
+  A. Choose between an in-process cache and a shared Redis cache, which have different infrastructure requirements, and implement the choice.
+  B. Migrate the HTTP client library used across about 45 files to a new library with a different API.
+  C. Fix a typo in a single user-facing error message.
+  D. Add a date validation conditional to one existing function whose behavior is fully specified.
+  E. Add a null check to one function where a stack trace pinpoints the failing line.
+KEY: AB
+WHY: Plan mode suits complex tasks with large-scale changes, multiple valid approaches, architectural decisions, or multi-file modifications. Direct execution is appropriate for simple, well-scoped changes with clear scope.
+  expl A [OK]: Correct. Multiple valid approaches with different consequences call for exploration and design first.
+  expl B [OK]: Correct. Large multi-file migrations have architectural implications and benefit from planning.
+  expl C [no]: A trivial one-line change is a direct execution task.
+  expl D [no]: A well-scoped, single-function change does not need a planning phase.
+  expl E [no]: The scope and cause are known, so direct execution is faster and safe.
+
+=== P1-Q23 | S2 | D3 | task 3.1 | I | select 1 ===
+STEM: A new developer joins and Claude Code generates code that ignores the team's naming and testing conventions, while a senior developer's sessions follow them perfectly. The conventions exist only in the senior developer's ~/.claude/CLAUDE.md. How should you resolve this?
+  A. Ask the new developer to copy the senior developer's user-level file into their own home directory and keep it updated by hand whenever the team's rules change.
+  B. Move the conventions into the project's CLAUDE.md (or .claude/CLAUDE.md), commit it, and use /memory to confirm the files are loaded.
+  C. Put the conventions in the new developer's personal settings so Claude applies them only for that person.
+  D. Add the conventions to .claude/commands/ and ask developers to invoke the command at the start of every session.
+KEY: B
+WHY: User-level CLAUDE.md applies only to that user and is not shared via version control. Team conventions belong in project-level configuration. The /memory command shows which memory files are loaded, which helps diagnose inconsistent behavior.
+  expl A [no]: This works once but is fragile and not versioned, so it drifts.
+  expl B [OK]: Correct. Project-level instructions are shared through version control and can be verified with /memory.
+  expl C [no]: This fixes one person and leaves the team inconsistent.
+  expl D [no]: Commands are invoked on demand, so conventions would only apply when someone remembers.
+
+=== P1-Q24 | S2 | D3 | task 3.3 | C | select 2 ===
+STEM: Your repository has Terraform under terraform/ with strict conventions that should only matter there, and test files named *.test.* spread across dozens of directories that must all follow one testing style. You want rules to load automatically and only when relevant. Select the TWO configurations to use.
+  A. Put every convention into the root CLAUDE.md under headings and rely on Claude to apply the right section.
+  B. Create .claude/rules/terraform.md with YAML frontmatter paths: ["terraform/**/*"] containing the Terraform conventions.
+  C. Create .claude/rules/testing.md with YAML frontmatter paths: ["**/*.test.*"] containing the testing conventions.
+  D. Place a CLAUDE.md in every directory that contains test files with the testing conventions copied into each.
+  E. Create skills for Terraform and testing and ask developers to invoke the right one before editing.
+KEY: BC
+WHY: Path-specific rules in .claude/rules/ with YAML frontmatter paths and glob patterns load conditionally when matching files are edited. This is better than directory CLAUDE.md files for conventions that span many directories and better than root CLAUDE.md for conventions relevant to only some files.
+  expl A [no]: The content loads always, costs tokens, and depends on inference about what applies.
+  expl B [OK]: Correct. Path-scoped rules load only when working on matching files.
+  expl C [OK]: Correct. A glob applies the conventions to test files wherever they live.
+  expl D [no]: Directory CLAUDE.md files are bound to their directories, so this duplicates content across dozens of locations.
+  expl E [no]: Skills are on-demand, so conventions would not be applied automatically.
+
+=== P1-Q25 | S2 | D3 | task 3.2 | F | select 1 ===
+STEM: A developer likes the team's project-scoped /review skill but wants a stricter personal variant for their own use, without changing what teammates get. What is the best approach?
+  A. Edit the project's SKILL.md and commit it so the stricter version becomes the team default.
+  B. Create a skill in ~/.claude/skills/ with a different name containing the stricter variant.
+  C. Add the stricter rules to the project CLAUDE.md so Claude applies them whenever the skill runs.
+  D. Edit the project's SKILL.md locally and just remember not to commit the change.
+KEY: B
+WHY: Personal skill customization belongs in ~/.claude/skills/ and should use a different name to avoid affecting teammates or colliding with the shared skill.
+  expl A [no]: This changes behavior for everyone, which the developer did not want.
+  expl B [OK]: Correct. A personal skill with a distinct name stays local and does not alter the shared one.
+  expl C [no]: CLAUDE.md is shared, so it would also change teammates' behavior.
+  expl D [no]: This risks accidental commits and merge conflicts on every pull.
+
+=== P1-Q26 | S2 | D3 | task 3.2 | I | select 1 ===
+STEM: You are writing a /scaffold-endpoint skill. It should be able to create new files but must never run shell commands or delete anything, and if a developer invokes it without an argument it should prompt for the endpoint name. Which SKILL.md configuration best meets this?
+  A. A rule in the project CLAUDE.md forbidding Bash and deletes in all sessions.
+  B. Frontmatter that sets allowed-tools to Read and Write only, and an argument-hint such as [endpoint-name].
+  C. A line in the skill body saying 'do not use Bash or delete files' and a note to ask the user for the endpoint name when none is given, so the behavior is documented where the skill is defined.
+  D. A user-scoped command in ~/.claude/commands/ that wraps the skill and lists the allowed behavior in its description.
+KEY: B
+WHY: Skill frontmatter can configure allowed-tools to restrict tool access while the skill runs and argument-hint to guide developers to supply required parameters. Enforcement through configuration is stronger than instructions in prose.
+  expl A [no]: This would restrict every workflow in the project, not just this skill.
+  expl B [OK]: Correct. allowed-tools restricts tool access during the skill, and argument-hint prompts for the required parameter.
+  expl C [no]: Body text is guidance the model might not follow, while allowed-tools restricts at the tool level.
+  expl D [no]: A personal wrapper is not shared with the team and a description does not restrict tools.
+
+=== P1-Q27 | S2 | D4 | task 4.2 | F | select 1 ===
+STEM: Claude Code generates function docstrings in different layouts from file to file, even though the prompt includes a paragraph describing the preferred layout. What is the most effective technique to make the output consistent?
+  A. Write a longer paragraph describing the docstring format with more rules, exceptions, and a note on tone, and place it at the top of the prompt.
+  B. Include two to four examples of correctly formatted docstrings in the prompt or project instructions.
+  C. Increase the sampling temperature so the model explores more formats and picks the best.
+  D. Generate the docstrings as usual and fix the format afterward with a regular expression script.
+KEY: B
+WHY: Few-shot examples are the most effective technique for consistently formatted output when detailed instructions alone produce inconsistent results. Two to four targeted examples demonstrate the desired shape.
+  expl A [no]: More prose is interpreted inconsistently, as the existing results show.
+  expl B [OK]: Correct. Few-shot examples are the most effective way to get a consistent format.
+  expl C [no]: More variation works against consistency.
+  expl D [no]: A regex cannot reliably fix free-form layout differences and does not address the cause.
+
+=== P1-Q28 | S2 | D4 | task 4.2 | C | select 1 ===
+STEM: You gave Claude Code three few-shot examples for writing unit tests: a pure function, a function with a database call, and a function with an HTTP call. For a new async generator it produces tests that do not exercise the yield behavior. A teammate suggests listing every function shape with its own rules. Which approach best helps the model generalize?
+  A. Replace the set with a few diverse examples that include brief reasoning about what is tested and how boundaries are mocked.
+  B. Create a dedicated subagent per function shape, each with its own examples, and route by detected shape.
+  C. Provide twenty examples of the database-call case so the model has a very strong template.
+  D. Write a detailed rule for each function shape, covering what to assert and what to mock, and extend the list whenever a new shape appears in the codebase.
+KEY: A
+WHY: Few-shot examples enable the model to generalize judgment to novel patterns, especially when they show reasoning. Exhaustive rule lists or per-shape agents match only anticipated cases.
+  expl A [OK]: Correct. Examples with reasoning teach transferable judgment rather than matching known cases.
+  expl B [no]: This adds agent infrastructure and still fails on shapes nobody anticipated.
+  expl C [no]: Repetition of one shape narrows the model's behavior and does not help novel structures.
+  expl D [no]: The list can never be complete, and it matches only pre-specified cases.
+
+=== P1-Q29 | S2 | D5 | task 5.4 | C | select 1 ===
+STEM: After three hours exploring a large Java service in one Claude Code session, answers become inconsistent. Claude now says 'typically, the service layer would handle this' instead of naming the actual classes it found earlier, and it contradicts earlier findings. Which approach best restores reliability?
+  A. Run /compact repeatedly and trust the generated summaries to keep all class names and call paths.
+  B. Switch to a model with a larger context window and continue the same session without notes.
+  C. Record key findings (class names, call paths) in a scratchpad file and consult it for later questions, delegate verbose exploration to subagents, and use /compact when context fills.
+  D. Add a sentence to the prompt telling Claude to be specific and not to rely on typical patterns.
+KEY: C
+WHY: Extended sessions suffer context degradation: the model starts using generic 'typical patterns' instead of specifics. Scratchpad files persist key findings, subagents isolate verbose discovery, and /compact reduces context when it fills with discovery output.
+  expl A [no]: Summaries are lossy, and compaction alone does not make specific findings durable.
+  expl B [no]: More room does not prevent the degradation of attention to early findings in long sessions.
+  expl C [OK]: Correct. Durable notes plus isolation and compaction counter context degradation.
+  expl D [no]: The model no longer has the details in focus, so an instruction cannot restore them.
+
+=== P1-Q30 | S2 | D5 | task 5.4 | I | select 1 ===
+STEM: A multi-hour Claude Code migration of 300 files across several agents is interrupted when the machine restarts. Some files were already migrated. You want to continue without redoing or double-applying work. What design is most reliable?
+  A. Restart the entire migration from the beginning and let the tools overwrite any previously migrated files, on the assumption that re-running the transformation on a migrated file is harmless.
+  B. Have each agent write its state (completed, in-progress, pending files and decisions) to a known manifest and load it on restart into the agents' prompts.
+  C. Resume the old session and rely on its stored tool results to know which files were handled.
+  D. Ask Claude to infer progress by reading the git history and guessing which files look migrated.
+KEY: B
+WHY: For crash recovery, each agent exports state to a known location, and the coordinator loads a manifest on resume and injects it into prompts. This records exactly what was completed so work is neither lost nor repeated.
+  expl A [no]: This wastes the completed work and may re-apply transformations to files that are already migrated.
+  expl B [OK]: Correct. A structured manifest enables crash recovery and avoids duplicating work.
+  expl C [no]: Prior tool results may be stale or incomplete after an interruption, and they do not record work precisely.
+  expl D [no]: Guessing from appearance is unreliable and may skip partially edited files.
+
+=== P1-Q31 | S2 | D5 | task 5.1 | F | select 1 ===
+STEM: Claude Code runs the project's full test command through Bash. It prints roughly 6,000 lines, mostly passing tests. Afterward Claude seems to lose track of earlier requirements in the conversation. What is the best way to handle the test run?
+  A. Clear the conversation after every command so context never grows.
+  B. Stop running tests during the session and run them only after all code changes are complete.
+  C. Keep running the full suite and paste all output into the conversation so nothing is missed, since Claude can only judge the suite if it sees every passing test as well as every failure.
+  D. Run the tests with output limited to failures and a summary (via reporter options), or delegate the run to a subagent, so only relevant results enter the main context.
+KEY: D
+WHY: Tool results accumulate in context and can consume tokens disproportionately to their relevance. Trimming outputs to relevant parts, or isolating verbose work in a subagent, preserves context for the task.
+  expl A [no]: Clearing discards requirements and prior decisions the session still needs.
+  expl B [no]: That removes the feedback loop and delays discovery of regressions.
+  expl C [no]: Thousands of passing lines consume context without informing the next action.
+  expl D [OK]: Correct. Trimming verbose tool output keeps context focused on what matters.
+
+=== P1-Q32 | S3 | D1 | task 1.3 | I | select 1 ===
+STEM: In the research system, the coordinator launches the synthesis subagent with the instruction 'Synthesize the research findings into a draft.' The subagent returns a generic draft with no specific facts and no citations, although the search and analysis subagents produced rich results minutes earlier. What is the most likely fix?
+  A. Include the complete findings from the search and analysis subagents in the synthesis subagent's prompt, with content separated from source metadata.
+  B. Rely on the synthesis subagent to read the coordinator's conversation history, which it inherits when the Task tool spawns it, so the coordinator only gives a short instruction about the output format.
+  C. Have the synthesis subagent repeat the web searches itself so it has its own fresh evidence to summarize.
+  D. Add a shared memory store that every subagent reads automatically at startup, then tell the coordinator to stop passing results.
+KEY: A
+WHY: Subagents start with isolated context. The coordinator must provide complete findings from prior agents directly in the subagent's prompt, ideally in a structured format that separates content from metadata such as source URLs and page numbers so attribution survives.
+  expl A [OK]: Correct. Subagents do not inherit context, so everything they need must be passed explicitly.
+  expl B [no]: Subagents operate with isolated context and do not inherit the coordinator's history.
+  expl C [no]: This duplicates work, widens the subagent's role, and gives it tools outside its specialization.
+  expl D [no]: Subagents do not share memory between invocations by default, and removing explicit context passing makes the problem worse.
+
+=== P1-Q33 | S3 | D1 | task 1.2 | I | select 1 ===
+STEM: The web search subagent discovers a PDF URL and, to save time, calls the document analysis subagent directly. In production, a failure in the document analysis step is invisible to the coordinator, and nobody can reconstruct which documents were analyzed. What architecture change is best?
+  A. Merge the search and document analysis subagents into one agent so no inter-agent calls are required.
+  B. Keep the direct calls and have each subagent write a log line describing the call to a shared file.
+  C. Let the document analysis subagent call back the search subagent whenever it needs more context, forming a peer loop.
+  D. Route all inter-subagent communication through the coordinator, which receives the URL, decides whether to invoke document analysis, and handles any errors.
+KEY: D
+WHY: A hub-and-spoke design has the coordinator manage all inter-subagent communication, error handling, and information routing. This gives observability and consistent recovery and prevents hidden failures.
+  expl A [no]: This removes specialization and tool scoping, and the coordinator would still lack visibility into steps.
+  expl B [no]: Logs improve visibility but the coordinator still cannot manage errors, and responsibility becomes distributed.
+  expl C [no]: Peer-to-peer chains make flow harder to trace and control, which is the original problem.
+  expl D [OK]: Correct. Hub-and-spoke provides observability, consistent error handling, and controlled information flow.
+
+=== P1-Q34 | S3 | D1 | task 1.2 | I | select 1 ===
+STEM: The research coordinator always runs web search, document analysis, synthesis, and report generation for every query. Simple factual questions such as 'In what year was the company founded?' take as long and cost as much as broad research requests. What should change?
+  A. Have the coordinator analyze each query's complexity and dynamically choose which subagents to invoke, skipping stages that are not needed.
+  B. Run every stage in parallel for all queries so that total time equals the slowest single stage.
+  C. Keep the full pipeline but run it on a smaller, faster model for every query to reduce cost.
+  D. Add a keyword filter before the coordinator that sends any question beginning with 'what' or 'when' straight to a cached answer table that is refreshed nightly from previous research.
+KEY: A
+WHY: Coordinators should analyze query requirements and dynamically select which subagents to invoke rather than always routing through the full pipeline. More agents are not always better.
+  expl A [OK]: Correct. Adaptive selection avoids unnecessary work for simple queries.
+  expl B [no]: Later stages depend on earlier outputs, and parallelizing does not remove the unnecessary work.
+  expl C [no]: This lowers cost per run but still performs unneeded stages and may degrade complex research.
+  expl D [no]: Keyword matching misroutes many questions and requires a table that cannot cover arbitrary facts.
+
+=== P1-Q35 | S3 | D1 | task 1.3 | F | select 1 ===
+STEM: A developer defines AgentDefinitions for search, analysis, synthesis, and report subagents. When the coordinator runs, it tries to answer research queries by itself and never delegates. Logs show no subagent invocations. The coordinator's allowedTools list contains Read and WebSearch. What should be changed?
+  A. Add a sentence to the system prompt saying 'You must delegate all research to the subagents and never answer a query directly yourself'.
+  B. Give each subagent the full set of tools so they can be reached without a coordinator.
+  C. Rename the subagents so their names better describe their roles, then re-run.
+  D. Add "Task" to the coordinator's allowedTools so it can spawn subagents.
+KEY: D
+WHY: The Task tool is how subagents are spawned, and allowedTools must include "Task" for a coordinator to invoke them. Without it, the coordinator can only use its own tools.
+  expl A [no]: Without the Task tool in allowedTools, the coordinator cannot delegate no matter how it is instructed.
+  expl B [no]: This does not create a way for the coordinator to spawn them and breaks tool scoping.
+  expl C [no]: Names do not enable invocation.
+  expl D [OK]: Correct. The Task tool is the mechanism for spawning subagents, and it must be allowed.
+
+=== P1-Q36 | S3 | D1 | task 1.1 | F | select 1 ===
+STEM: A search subagent's loop ends whenever the assistant's message includes the text 'FINAL ANSWER'. Sometimes the model forgets the phrase and the loop runs until a safety timeout, and sometimes it writes the phrase while still requesting a tool. What is the correct termination logic?
+  A. End the loop after three iterations in all cases so it cannot run for long.
+  B. End the loop when the response's stop_reason is 'end_turn', and keep executing requested tools while it is 'tool_use'.
+  C. Keep the phrase check but add a second and third phrase such as 'DONE' and 'COMPLETE', so that any of them ends the loop, and remind the model in the prompt to use one.
+  D. End the loop as soon as the assistant message contains any text content.
+KEY: B
+WHY: Loops should continue on stop_reason 'tool_use' and terminate on 'end_turn'. Parsing natural language, relying on arbitrary iteration caps as the primary mechanism, or checking for text content are all anti-patterns.
+  expl A [no]: An arbitrary cap truncates legitimate multi-step searches and does not reflect task completion.
+  expl B [OK]: Correct. The API's stop_reason is the reliable control signal.
+  expl C [no]: More phrases are still natural-language parsing and still fail when the model omits or misuses them.
+  expl D [no]: Text can accompany tool_use blocks, so this would end the loop prematurely.
+
+=== P1-Q37 | S3 | D1 | task 1.7 | I | select 1 ===
+STEM: A researcher uses a named session to investigate a market over several days with --resume. Overnight, two of the source documents the agent analyzed were revised. The researcher wants the investigation to continue accurately without re-reading everything. What is the best approach?
+  A. Resume the session without mentioning the change, since the agent will notice changes in its tools automatically.
+  B. Delete the session and re-run the whole investigation from the beginning to be safe.
+  C. Resume the named session and tell the agent which two documents changed, so it re-analyzes those specific files and updates the affected conclusions.
+  D. Fork the session and let the forked branch assume the original conclusions remain correct.
+KEY: C
+WHY: When resuming after changes, inform the agent about specific changes so it can do targeted re-analysis rather than full re-exploration. Resumption is appropriate when prior context is mostly valid; fresh starts with summaries are better when most results are stale.
+  expl A [no]: The agent has no way to know the documents changed unless it is told or re-reads them.
+  expl B [no]: This wastes work when only two documents changed.
+  expl C [OK]: Correct. Prior context is mostly valid, so targeted re-analysis is efficient.
+  expl D [no]: A fork keeps the same stale conclusions and offers no benefit here.
+
+=== P1-Q38 | S3 | D1 | task 1.3 | C | select 1 ===
+STEM: The coordinator currently spawns the web search subagent, waits, then spawns the document analysis subagent in the next turn, even though the two tasks are independent. Its prompt also lists numbered steps ('1. search for X, 2. open each result...') that sometimes block the subagents from adapting to unexpected sources. Which redesign addresses both issues?
+  A. Emit multiple Task calls in one coordinator response for the independent subagents, and rewrite the prompt to state research goals and quality criteria instead of numbered steps.
+  B. Have the web search subagent spawn the document analysis subagent as soon as it finds a file, and shorten the prompt.
+  C. Run both subagents from application code in two parallel threads, and keep the numbered steps in the prompt so each subagent's behavior stays predictable and easy to audit across runs.
+  D. Replace both subagents with one agent that performs search and analysis in sequence from a long list of instructions.
+KEY: A
+WHY: Parallel subagents are spawned by emitting multiple Task tool calls in one coordinator response. Coordinator prompts should specify goals and quality criteria rather than step-by-step procedures so subagents can adapt.
+  expl A [OK]: Correct. Parallel Task calls reduce latency and goal-based prompts allow subagents to adapt.
+  expl B [no]: Subagent-to-subagent spawning bypasses the coordinator and fails to address the procedural prompt.
+  expl C [no]: Moving orchestration out of the model removes coordinator judgment and keeps the rigid steps.
+  expl D [no]: This loses specialization and parallelism and makes the prompt more procedural.
+
+=== P1-Q39 | S3 | D2 | task 2.2 | C | select 1 ===
+STEM: The web search subagent's tool wrapper catches network timeouts and returns an empty results list marked successful. In the final report, the synthesis says 'no evidence was found that vendor X had security incidents'. Later it turns out the search never ran. What change best prevents this?
+  A. Have the coordinator re-run every empty search with broader terms to see if something appears.
+  B. Keep empty-success responses but add a low-confidence label to the final report in every case.
+  C. Separate access failures from valid empty results: return structured error context for timeouts, and a zero-match success only when the search actually ran.
+  D. Treat every empty result as a failure and retry the search three times with exponential backoff before reporting a problem, logging each attempt for later analysis.
+KEY: C
+WHY: Access failures (timeouts needing retry decisions) and valid empty results (successful queries with no matches) mean different things. Silently converting failures to empty successes suppresses errors and leads to false claims of absence.
+  expl A [no]: This does not tell the coordinator whether the original query executed, and may broaden irrelevantly.
+  expl B [no]: A blanket label does not tell the reader or coordinator which searches actually failed.
+  expl C [OK]: Correct. The coordinator can retry, rephrase, or annotate the gap.
+  expl D [no]: Genuine searches may legitimately return nothing, and retrying them wastes effort.
+
+=== P1-Q40 | S3 | D2 | task 2.4 | F | select 1 ===
+STEM: The document analysis subagent spends many turns calling list and search tools just to find out which internal reports exist before it can analyze anything. The team has a reliable index of all reports with titles, dates, and topics. How can you reduce these exploratory calls?
+  A. Tell the agent to guess likely report titles and open them directly.
+  B. Embed the full text of all reports in the system prompt so the agent already has everything.
+  C. Add another search tool with a similar name and a broader query syntax, so that the agent has more ways to find reports and can pick whichever works.
+  D. Expose the report catalog as an MCP resource so the agent can see what is available without exploratory tool calls.
+KEY: D
+WHY: MCP resources expose content catalogs such as documentation hierarchies, issue summaries, or database schemas so agents have visibility into available data without exploratory tool calls.
+  expl A [no]: Guessing wastes calls and misses reports.
+  expl B [no]: That consumes massive context and does not scale.
+  expl C [no]: More overlapping tools add selection ambiguity and do not give an overview.
+  expl D [OK]: Correct. MCP resources are designed to expose content catalogs.
+
+=== P1-Q41 | S3 | D2 | task 2.1 | I | select 1 ===
+STEM: The coordinator frequently sends PDF analysis requests to analyze_content and web page requests to analyze_document, although both tools have nearly identical descriptions ('Analyzes content and returns findings'). Which fix is most effective?
+  A. Rename the tools to purpose-specific names (for example extract_web_results and analyze_document_pdf) and rewrite descriptions with inputs, outputs, and boundaries for each.
+  B. Keep the names and add a system prompt line saying 'use analyze_content for the internet and analyze_document for files'.
+  C. Delete one of the tools and route all requests through the remaining one with a type parameter.
+  D. Force the model to try analyze_content first for every request and switch to analyze_document only on an error.
+KEY: A
+WHY: Ambiguous or overlapping tool descriptions cause misrouting. Renaming tools and writing descriptions that clearly differentiate purpose, inputs, outputs, and boundaries is the primary fix.
+  expl A [OK]: Correct. Clear names and differentiated descriptions eliminate the overlap that causes misrouting.
+  expl B [no]: A prompt patch leaves ambiguous tool definitions and depends on the model following the rule.
+  expl C [no]: Merging could work, but it discards the opportunity for clear boundaries and may reduce reliability for different input types.
+  expl D [no]: Trial and error doubles calls and produces avoidable failures.
+
+=== P1-Q42 | S3 | D4 | task 4.6 | F | select 1 ===
+STEM: The research system uses the same agent instance to write a report and then review it. The reviewer keeps approving the report even though a spot check finds an unsupported claim. What is the best improvement?
+  A. Ask the generating agent to review its own work again in the same session, with explicit instructions to take a more critical tone this time.
+  B. Use a second, independent Claude instance without the generator's reasoning context to review the report.
+  C. Increase the length of the report so the reviewer has more material to evaluate.
+  D. Remove the review step and rely on the quality of the initial generation.
+KEY: B
+WHY: A model retains its reasoning context from generation, making it less likely to question its own decisions. An independent instance without that context is more effective at catching subtle issues.
+  expl A [no]: The same session retains its own reasoning and tends not to question its decisions.
+  expl B [OK]: Correct. Independent review is more likely to question decisions made during generation.
+  expl C [no]: Longer reports make review harder, not better.
+  expl D [no]: This removes the safeguard that caught issues.
+
+=== P1-Q43 | S3 | D4 | task 4.6 | C | select 1 ===
+STEM: A cited research report passes schema validation: every claim has a URL, the URLs resolve, and the formatting is perfect. A manual audit shows 11% of claims are not actually supported by the cited page. Which verification design is most effective?
+  A. Ask the writing agent to re-check each of its own citations using extended thinking before finalizing, and to remove any claim it is unsure about so unsupported claims drop out.
+  B. Add a stricter schema rule that every claim must include at least two URLs.
+  C. Run the generation three times and keep only claims that appear in at least two runs.
+  D. Run a separate verifier instance that receives only each claim and its cited excerpt, without the generator's reasoning, and returns supported or unsupported.
+KEY: D
+WHY: Syntactically valid citations do not guarantee semantic support. Independent review instances without the generator's reasoning context are more effective than self-review or extended thinking at catching subtle issues.
+  expl A [no]: The same instance retains its generation context and is less likely to challenge itself.
+  expl B [no]: More URLs make the output look better but say nothing about whether the sources support the claim.
+  expl C [no]: Agreement among runs of the same model can repeat the same error and may suppress true but intermittent claims.
+  expl D [OK]: Correct. Independent, focused verification tests semantic support.
+
+=== P1-Q44 | S3 | D4 | task 4.6 | I | select 1 ===
+STEM: A single-pass review of 12 analyzed source documents produces thorough comments on the first few, shallow comments on the rest, and contradictory judgments about the same statistic in two documents. What restructuring is best?
+  A. Run three full-length single-pass reviews and accept only the findings that appear in at least two of them, to filter out one-off errors from any single run.
+  B. Split the batch into two sets of six documents and review each set in a separate session without any later comparison.
+  C. Run a focused per-document pass for local issues, then a separate integration pass that compares claims across documents.
+  D. Ask the reviewer to be consistent across all documents and to treat all documents with equal care.
+KEY: C
+WHY: Large multi-item reviews suffer attention dilution. Splitting into per-item local analysis plus a dedicated cross-item integration pass yields consistent depth and handles cross-document issues.
+  expl A [no]: Consensus filtering can discard real issues found inconsistently and does not fix the depth problem.
+  expl B [no]: Smaller sets help depth but remove cross-document comparison, so contradictions persist.
+  expl C [OK]: Correct. This avoids attention dilution and handles cross-document consistency explicitly.
+  expl D [no]: Instruction alone does not change attention dilution.
+
+=== P1-Q45 | S3 | D4 | task 4.2 | C | select 1 ===
+STEM: The document analysis subagent extracts the methodology of each paper. It returns null for methodology on papers where the method is described in narrative paragraphs rather than a labelled 'Methods' section. Which prompt change is likely most effective?
+  A. Pre-process every paper to detect the 'Methods' heading and skip papers without one.
+  B. Instruct the model to search harder and to avoid returning null whenever possible.
+  C. Add few-shot examples showing correct extraction from documents with different structures, including one where methodology is embedded in narrative text.
+  D. Mark methodology as required in the schema so the model must always produce a value.
+KEY: C
+WHY: Few-shot examples demonstrating extraction from varied document structures reduce empty or null extraction of fields that exist in non-standard locations.
+  expl A [no]: This excludes valid papers and does not solve the extraction problem.
+  expl B [no]: A general instruction does not teach recognition of narrative methodology.
+  expl C [OK]: Correct. Examples of varied structures address the empty extraction caused by format differences.
+  expl D [no]: Forcing a required field encourages fabrication when the information is hard to find rather than teaching where to look.
+
+=== P1-Q46 | S3 | D5 | task 5.6 | F | select 1 ===
+STEM: In a research pipeline, the summarization step condenses ten findings into one paragraph. The final report states a statistic but nobody can tell which source it came from. What should the pipeline have done?
+  A. Require structured claim-source mappings (claim, source, excerpt) from subagents and make synthesis preserve and merge them.
+  B. Remove statistics from reports to avoid unattributed numbers.
+  C. Ask the summarizer to add a general line listing all the sources used by the ten findings at the end of the paragraph, in alphabetical order.
+  D. Have the report generator search the web again to rediscover where each statistic came from.
+KEY: A
+WHY: Source attribution is lost when findings are compressed without preserving claim-source mappings. Structured mappings must be required and carried through synthesis.
+  expl A [OK]: Correct. Mappings keep attribution through summarization.
+  expl B [no]: This discards valuable content instead of preserving attribution.
+  expl C [no]: A source list does not connect individual claims to sources.
+  expl D [no]: Rediscovery is unreliable and wasteful when the information existed earlier.
+
+=== P1-Q47 | S3 | D5 | task 5.3 | C | select 1 ===
+STEM: During a research run, the web search subagent times out on one of five sub-topics after retrying locally. The rest of the pipeline succeeds. Which behavior is best for the final deliverable?
+  A. Retry the failing search indefinitely until it succeeds before producing any output.
+  B. Silently omit that sub-topic and present the report as complete.
+  C. Terminate the entire run and tell the user the research failed, since a report with a missing sub-topic would be incomplete and might mislead decision makers.
+  D. Return structured error context to the coordinator, which continues with the available findings and annotates the report with the coverage gap.
+KEY: D
+WHY: Subagents should recover locally from transient failures and propagate only unresolved errors with structured context. The coordinator can proceed with partial results and annotate coverage gaps. Silent suppression and total termination are both anti-patterns.
+  expl A [no]: Unbounded retries can hang the system and may never succeed.
+  expl B [no]: Silent omission misleads the reader about coverage.
+  expl C [no]: Failing everything for one sub-topic wastes valid work.
+  expl D [OK]: Correct. The report remains useful and is honest about what is missing.
+
+=== P1-Q48 | S4 | D1 | task 1.2 | I | select 1 ===
+STEM: A developer-productivity team built a coordinator with four subagents (explorer, planner, coder, tester) and runs all four for every request. Renaming one local variable in one file now takes minutes, and details discovered by the explorer are often lost in handoffs. What should the team do?
+  A. Add a fifth subagent that summarizes each handoff so details are not lost between the others.
+  B. Remove the coordinator and let the four subagents message each other directly as needed.
+  C. Keep the four-agent pipeline but run the planner and the coder in parallel and cache the explorer's output, then reconcile their results at the end to reduce elapsed time.
+  D. Let the coordinator assess task scope and handle small, well-scoped changes with a single agent, invoking subagents only when the task needs them.
+KEY: D
+WHY: Multi-agent structure carries cost: latency, handoff loss, and extra context management. Coordinators should select subagents based on query complexity, and trivial tasks do not need the full pipeline.
+  expl A [no]: This adds another boundary and another point of loss to a problem caused by too many boundaries.
+  expl B [no]: Peer messaging reduces observability and does not remove unnecessary stages.
+  expl C [no]: The coder depends on the plan, and the task still pays the cost of agents it does not need.
+  expl D [OK]: Correct. Delegation should follow complexity, which also removes unnecessary handoff loss.
+
+=== P1-Q49 | S4 | D2 | task 2.3 | C | select 1 ===
+STEM: Your exploration subagent has Read, Grep, Glob, Write, and Bash. Twice it modified files while 'just checking something' and sometimes needs commit history to understand why code exists. You want exploration to be strictly read-only but still able to see history. What is the best configuration?
+  A. Keep Write but add a hook that logs every write so mistakes can be reverted later.
+  B. Keep Bash and Write and add the instruction 'do not modify files, only run read-only commands'.
+  C. Restrict it to Read, Grep, and Glob and add a narrowly scoped git_history tool that only returns read-only log output for a given path.
+  D. Remove all tools and have the coordinator paste file contents and history into the subagent's prompt.
+KEY: C
+WHY: Scope tools to the role: a read-only explorer does not need Write or unrestricted Bash. For a high-frequency cross-role need, provide a narrowly scoped tool instead of broad access.
+  expl A [no]: Logging after the fact does not prevent unintended modification.
+  expl B [no]: The capability to modify files remains, and compliance with the prompt is probabilistic.
+  expl C [OK]: Correct. The agent keeps what it needs without general write or shell access.
+  expl D [no]: This moves the exploration burden to the coordinator and defeats the subagent's purpose.
+
+=== P1-Q50 | S4 | D2 | task 2.5 | C | select 1 ===
+STEM: You need every caller of fetchInvoice. The function is defined in billing/api.ts, re-exported under the alias getInvoice by a barrel file, and wrapped by billingClient.fetch(). A Grep for 'fetchInvoice' returns 4 files, but runtime traces show more callers. What is the best approach?
+  A. Grep only for 'fetchInvoice' with a case-insensitive flag, since the alias is probably a variation of the same word.
+  B. Use Glob with the pattern **/*invoice* to list candidate files and assume they contain all callers.
+  C. Read every file in the repository into context and search by eye for any call that looks like an invoice fetch, working through the directories one at a time.
+  D. First identify all exported names and wrappers of the function (the alias, re-export, and wrapper), then Grep for each name across the codebase.
+KEY: D
+WHY: Grep searches content, Glob matches paths. To trace usage across wrapper modules, first identify all exported names (aliases, re-exports, wrappers) and then search for each.
+  expl A [no]: Case-insensitivity does not catch a differently named alias or wrapper.
+  expl B [no]: Glob matches file names, not call sites, so callers in unrelated files are missed.
+  expl C [no]: This exhausts context and misses subtle call patterns.
+  expl D [OK]: Correct. Tracing through wrapper modules requires searching every exported name.
+
+=== P1-Q51 | S4 | D2 | task 2.4 | C | select 1 ===
+STEM: Engineers asked the agent for open bugs linked to a failing service. It keeps using built-in Grep on exported issue text files rather than the team's MCP tool search_issues, which supports JQL filtering and linked-issue traversal. The tool's description reads: 'Searches issues.' What is the best fix?
+  A. Remove Grep from the agent's allowed tools so that it has to use the MCP tool for every search it performs, whether the target is code, logs, or issues.
+  B. Replace the MCP tool with a custom wrapper script that calls the same API and is run through Bash.
+  C. Rewrite the MCP tool description to explain its capabilities, inputs such as JQL, outputs, and when to prefer it over text search.
+  D. Add 'always use search_issues' to CLAUDE.md for every task the agent performs.
+KEY: C
+WHY: Enhancing MCP tool descriptions to explain capabilities and outputs in detail prevents the agent from preferring built-in tools like Grep over more capable MCP tools.
+  expl A [no]: Grep is needed for code search elsewhere, and removing it breaks other workflows.
+  expl B [no]: This adds a layer and removes the structured tool interface.
+  expl C [OK]: Correct. A richer description lets the model recognize the tool as the better fit.
+  expl D [no]: A blanket instruction overrides judgment for unrelated tasks and does not explain when the tool is better.
+
+=== P1-Q52 | S4 | D3 | task 3.4 | I | select 1 ===
+STEM: An engineer must decide how to change a legacy billing module whose behavior is poorly documented. Exploring it will involve reading dozens of files, and the engineer wants to avoid filling the main conversation with raw file contents. Which approach fits best?
+  A. Read all of the module's files into the main conversation first so that every detail is available while designing the change, and then begin editing.
+  B. Start editing right away and learn the structure as the changes break things.
+  C. Use plan mode and delegate discovery to the Explore subagent, which returns a summary so the main conversation keeps room for design.
+  D. Create a separate custom subagent for each source file in the module and ask the main agent to merge their outputs.
+KEY: C
+WHY: Plan mode allows safe exploration and design before committing to changes. The Explore subagent isolates verbose discovery output and returns summaries, preserving the main context.
+  expl A [no]: This floods the main context with discovery output.
+  expl B [no]: Exploring through breakage risks expensive rework in a poorly understood area.
+  expl C [OK]: Correct. Plan mode plus Explore isolates verbose discovery.
+  expl D [no]: That is excessive coordination for a discovery job that one Explore subagent can summarize.
+
+=== P1-Q53 | S4 | D3 | task 3.1 | I | select 1 ===
+STEM: A monorepo has packages with different standards: the api package needs API and testing standards, the data package needs only data and testing standards. A single 2,000-line root CLAUDE.md makes sessions noisy and developers keep editing conflicting parts. What is a more maintainable approach?
+  A. Copy the relevant standards text into each package's CLAUDE.md so every package is self-contained.
+  B. Keep standards in separate files and use @import in each package's CLAUDE.md to include only the standards relevant to that package.
+  C. Convert each standard into a skill and require developers to invoke the right skills for their package.
+  D. Keep the single root CLAUDE.md but add headings for each package and rely on Claude to ignore irrelevant sections.
+KEY: B
+WHY: The @import syntax references external files to keep CLAUDE.md modular, for example importing the standards files relevant to each package. .claude/rules/ is another option for topic-specific files.
+  expl A [no]: Copying duplicates content, and the copies drift.
+  expl B [OK]: Correct. @import keeps CLAUDE.md modular and relevant.
+  expl C [no]: Always-needed standards should not depend on manual invocation.
+  expl D [no]: All content still loads, which wastes context and relies on inference.
+
+=== P1-Q54 | S4 | D3 | task 3.5 | F | select 1 ===
+STEM: A developer unfamiliar with caching asks Claude Code to 'add a cache to the product lookup service'. Claude implements a simple time-based cache. Later problems appear: stale prices after updates and a thundering herd on cold start. What technique should the developer have used before implementation?
+  A. Ask Claude to implement the simplest version first and review any production incidents afterward, then iterate on the design as problems are found.
+  B. Ask Claude to interview them first about cache invalidation, failure modes, and consistency needs before writing code.
+  C. Request three completely different caching implementations and pick the one that looks cleanest.
+  D. Tell Claude to use a well-known caching library and avoid writing custom logic.
+KEY: B
+WHY: The interview pattern has Claude ask questions to surface design considerations such as cache invalidation strategies and failure modes before implementing in unfamiliar domains.
+  expl A [no]: This discovers the issues only after they hurt.
+  expl B [OK]: Correct. The interview pattern surfaces considerations the developer has not thought of.
+  expl C [no]: Without knowing the requirements, the appearance of cleanliness is not a good selector.
+  expl D [no]: A library does not decide invalidation or consistency requirements for the developer.
+
+=== P1-Q55 | S4 | D3 | task 3.2 | F | select 1 ===
+STEM: A team has two pieces of guidance. One is 'always use strict TypeScript settings and never use any'. The other is a 40-step release checklist used a few times each month. Where should each be placed in Claude Code?
+  A. Put the TypeScript rule in CLAUDE.md so it always applies, and make the release checklist a skill invoked when releasing.
+  B. Make both skills and rely on developers to invoke them as needed.
+  C. Put the checklist in CLAUDE.md and the TypeScript rule in a skill so the longer content is always visible.
+  D. Put both in CLAUDE.md so everything is available in every session without anyone needing to remember to invoke a command or skill or to search for it.
+KEY: A
+WHY: Skills are for on-demand, task-specific workflows. CLAUDE.md is for always-loaded universal standards.
+  expl A [OK]: Correct. Universal standards belong in always-loaded memory and task-specific workflows in on-demand skills.
+  expl B [no]: The universal rule would be skipped whenever someone forgets to invoke it.
+  expl C [no]: This reverses the usage pattern of both pieces of guidance.
+  expl D [no]: A 40-step checklist loaded every time wastes context for work that is rarely needed.
+
+=== P1-Q56 | S4 | D3 | task 3.4 | I | select 1 ===
+STEM: You must migrate a logging library across 47 files, with some modules using custom wrappers. The team wants an agreed approach before edits begin and then wants the work completed efficiently. Which workflow is best?
+  A. Remain in plan mode through implementation so that each edit is first proposed for approval.
+  B. Write a long manual migration guide and have developers perform the edits by hand.
+  C. Start with direct execution and fix modules one at a time, adjusting the approach as wrappers and dependencies appear, which keeps each individual change small.
+  D. Use plan mode to investigate usage and design the migration approach for review, then switch to direct execution to implement the approved plan.
+KEY: D
+WHY: Plan mode suits library migrations affecting many files. Combining plan mode for investigation with direct execution for implementation is a documented pattern.
+  expl A [no]: Plan mode is for design. Staying in it for 47 files adds friction after the approach is settled.
+  expl B [no]: This forgoes the tool's strength and risks inconsistency.
+  expl C [no]: Without planning, wrappers and dependencies surface late and cause rework.
+  expl D [OK]: Correct. It combines safe planning with efficient implementation.
+
+=== P1-Q57 | S4 | D4 | task 4.2 | I | select 2 ===
+STEM: The developer assistant has Grep, Glob, Read, and an MCP tool find_symbol. For requests like 'where is the E_TIMEOUT error raised?' it sometimes picks Glob, and for 'find all *.spec.ts files' it sometimes picks Grep. Select the TWO changes that best improve tool selection on ambiguous requests.
+  A. Add ten more overlapping search tools so the model can choose the closest match.
+  B. Add a few targeted few-shot examples showing ambiguous requests and why one tool was chosen over the plausible alternative.
+  C. Set tool_choice to 'any' so the model has to choose a tool on each turn.
+  D. Expand each tool description with input formats, example queries, and boundaries stating when to use it versus similar tools.
+  E. Add a keyword router in application code that always selects the tool before the model sees the request.
+KEY: BD
+WHY: Better tool descriptions and few-shot examples with reasoning improve selection among similar tools. Adding overlap, rigid routing, or tool_choice 'any' does not address the cause.
+  expl A [no]: More overlapping tools increase ambiguity.
+  expl B [OK]: Correct. Reasoned examples demonstrate the distinction.
+  expl C [no]: This forces a tool call but does nothing to improve which one is chosen.
+  expl D [OK]: Correct. Descriptions are the primary selection mechanism.
+  expl E [no]: This bypasses the model's understanding and is brittle.
+
+=== P1-Q58 | S4 | D4 | task 4.2 | I | select 1 ===
+STEM: When summarizing legacy modules, the agent flags every use of global state as a defect, even in well-contained, intentional configuration singletons. Developers start ignoring the summaries. Which prompt change best reduces these false flags while still catching real problems?
+  A. Add examples that distinguish acceptable patterns (contained, intentional singletons) from genuine issues (mutable state shared across threads), with reasoning.
+  B. Ask the agent to list every global variable without judgment and let developers decide.
+  C. Stop flagging global state entirely in all future summaries.
+  D. Add the instruction 'Only flag global state when you are very sure it is a real problem and skip anything borderline' to the summary prompt, then review the false flags weekly.
+KEY: A
+WHY: Few-shot examples distinguishing acceptable patterns from genuine issues reduce false positives while allowing generalization to novel patterns.
+  expl A [OK]: Correct. Contrasting examples teach the boundary and generalize.
+  expl B [no]: This shifts the burden back to developers and loses the value of analysis.
+  expl C [no]: This also removes true positives.
+  expl D [no]: Confidence wording is vague and does not define the boundary.
+
+=== P1-Q59 | S4 | D4 | task 4.1 | F | select 1 ===
+STEM: Asked to 'explain this legacy module well', the agent returns varied answers: sometimes a function-by-function tour, sometimes a high-level essay. Engineers want a consistent, useful orientation. Which prompt change is best?
+  A. State explicit criteria for the explanation: entry points, side effects, external dependencies, data it mutates, and known risky areas.
+  B. Request the explanation three times and choose the best by eye.
+  C. Tell the agent to match the style of the last answer it gave to the same engineer.
+  D. Ask for the explanation to be 'thorough but concise' and 'appropriate to the module's importance', so that the agent aims for a sensible middle ground in every answer.
+KEY: A
+WHY: Explicit criteria produce more consistent output than vague instructions such as 'explain well'.
+  expl A [OK]: Correct. Explicit criteria define what a good explanation contains.
+  expl B [no]: This increases cost and still has no standard.
+  expl C [no]: The last answer may itself be inconsistent.
+  expl D [no]: Adjectives remain open to interpretation.
+
+=== P1-Q60 | S4 | D5 | task 5.4 | C | select 1 ===
+STEM: A refactoring run is split among four worker agents with a coordinator. The coordinator crashes after two workers have written their changes. After restart, the coordinator re-delegates all four work packages and two files end up with duplicated edits. What design prevents this?
+  A. Restart all four workers from scratch and instruct each one to check carefully for existing edits and not to duplicate any change that was already made.
+  B. Have the coordinator resume its old session and trust its recollection of which workers finished.
+  C. Each worker exports its completed units to a known manifest; on resume the coordinator loads it and delegates only the unfinished units.
+  D. Ask a fifth agent to scan the repository afterward and remove anything that looks duplicated.
+KEY: C
+WHY: Structured state persistence for crash recovery: each agent exports state to a known location, and the coordinator loads a manifest on resume and injects it into prompts, so completed units are not re-delegated.
+  expl A [no]: Care instructions cannot detect what has already been applied.
+  expl B [no]: The crash lost in-flight state and stale recollection is unreliable.
+  expl C [OK]: Correct. A manifest records finished work so recovery is not repeated.
+  expl D [no]: Cleanup after the fact is error-prone and may remove legitimate code.

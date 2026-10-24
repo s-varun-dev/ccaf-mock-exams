@@ -1,0 +1,793 @@
+=== P5-Q01 | S2 | D1 | task 1.7 | I | select 1 ===
+STEM: A Claude Code investigation of flaky tests ran for several days. Meanwhile, the test runner was upgraded and many earlier tool outputs now describe behavior that no longer exists. You decide to start a new session with a structured summary. Which content should the summary carry?
+  A. Only the first and last message of the old session, since they contain the goal and the final result.
+  B. Every command the old session ran, in order, so that the new session can replay them and compare results.
+  C. The complete transcript of the old session, pasted in full, so that nothing the previous session saw is lost and the new session has every detail available.
+  D. Confirmed conclusions, decisions already made, files of interest, and open questions, leaving out raw tool output tied to the old runner.
+KEY: D
+WHY: When prior tool results are stale, a new session seeded with a structured summary is more reliable than resuming. The summary should carry durable facts and decisions and leave out outdated raw output.
+  expl A [no]: Middle messages contain the findings and decisions that should survive.
+  expl B [no]: Replaying commands is slow and repeats exploration the summary is meant to avoid.
+  expl C [no]: A full paste brings the stale tool results back into the new context.
+  expl D [OK]: Correct. The summary carries what is still valid and omits stale output.
+
+=== P5-Q02 | S2 | D1 | task 1.7 | F | select 1 ===
+STEM: Which situation is the best use of fork_session?
+  A. Comparing two candidate refactoring approaches, starting from the same completed analysis of a module.
+  B. Recovering from a crash by restoring the last saved state of every tool call.
+  C. Continuing yesterday's debugging work on the same bug with the same accumulated context.
+  D. Beginning an unrelated task in a different repository with no connection to the earlier analysis.
+KEY: A
+WHY: fork_session creates independent branches from a shared analysis baseline to explore divergent approaches.
+  expl A [OK]: Correct. Forks explore divergent approaches from a shared baseline.
+  expl B [no]: Crash recovery relies on persisted state, not branching.
+  expl C [no]: Continuing a prior conversation is session resumption.
+  expl D [no]: An unrelated task has no shared baseline to fork from.
+
+=== P5-Q03 | S2 | D3 | task 3.1 | I | select 1 ===
+STEM: A team lists four pieces of guidance: (a) a developer's preference for terse replies, (b) rules that apply only to files under payments/, (c) naming standards for the entire repository, (d) Terraform module conventions for .tf files spread across several folders. Which mapping to Claude Code mechanisms is most appropriate?
+  A. (a) a skill, (b) the project-level CLAUDE.md, (c) the user-level ~/.claude/CLAUDE.md, (d) a directory-level CLAUDE.md in terraform/.
+  B. (a) directory-level CLAUDE.md in payments/, (b) the project-level CLAUDE.md, (c) a .claude/rules/ file without paths, (d) the user-level ~/.claude/CLAUDE.md.
+  C. (a) user-level ~/.claude/CLAUDE.md, (b) directory-level CLAUDE.md in payments/, (c) project-level CLAUDE.md, (d) a .claude/rules/ file scoped by a **/*.tf glob.
+  D. (a) project-level CLAUDE.md, (b) user-level ~/.claude/CLAUDE.md, (c) directory-level CLAUDE.md in each package, (d) a skill invoked manually before editing any Terraform file.
+KEY: C
+WHY: CLAUDE.md supports user, project, and directory scopes; path-scoped rules in .claude/rules/ apply conventions by file pattern, regardless of directory.
+  expl A [no]: Repository-wide naming standards in a personal file are not shared, and one directory file misses .tf files elsewhere.
+  expl B [no]: This scrambles scope for all four items.
+  expl C [OK]: Correct. Each item uses the narrowest mechanism that reaches the right audience and files.
+  expl D [no]: This puts personal preferences in the shared file and relies on manual invocation for Terraform.
+
+=== P5-Q04 | S2 | D3 | task 3.2 | F | select 1 ===
+STEM: A teammate asks which Claude Code feature supports frontmatter options like context: fork, allowed-tools, and argument-hint. What is the answer?
+  A. The settings file for hooks, as fields on the PostToolUse entry.
+  B. Skills, defined as SKILL.md files under .claude/skills/.
+  C. The project-level CLAUDE.md file, in a block at the top of the file.
+  D. The .mcp.json file, as properties on each server entry.
+KEY: B
+WHY: Skills in .claude/skills/ use SKILL.md frontmatter supporting context: fork, allowed-tools, and argument-hint.
+  expl A [no]: These are not hook settings.
+  expl B [OK]: Correct. These frontmatter options belong to skills.
+  expl C [no]: CLAUDE.md holds instructions, not these skill options.
+  expl D [no]: .mcp.json configures MCP servers.
+
+=== P5-Q05 | S2 | D3 | task 3.5 | I | select 1 ===
+STEM: A developer is facing three problems: (i) Claude interprets a prose description of a data transformation inconsistently, (ii) the developer is implementing something in a domain they don't know well, (iii) a function mishandles edge cases and needs a verifiable standard. Which pairing of problem and technique is best?
+  A. (i) write tests first and iterate on failures, (ii) provide concrete input/output examples, (iii) use the interview pattern.
+  B. (i) provide two or three concrete input/output examples, (ii) use the interview pattern, (iii) write tests first and iterate on failures.
+  C. (i) use the interview pattern, (ii) write tests first and iterate on failures, (iii) provide two or three concrete input/output examples for each edge case.
+  D. (i) repeat the prose with greater emphasis, (ii) provide one long example, (iii) ask Claude to rate its confidence.
+KEY: B
+WHY: Concrete examples fix inconsistent interpretation; the interview pattern surfaces unconsidered considerations in unfamiliar domains; test-driven iteration gives verifiable feedback on edge cases.
+  expl A [no]: Examples need domain knowledge to write, and an interview doesn't define edge case behavior.
+  expl B [OK]: Correct. Each technique matches the problem it was designed for.
+  expl C [no]: Tests can't be written well in an unfamiliar domain, and the interview doesn't fix inconsistent interpretation.
+  expl D [no]: None of these addresses the underlying problems.
+
+=== P5-Q06 | S2 | D3 | task 3.3 | I | select 2 ===
+STEM: A new engineer asks how path-specific rule files in .claude/rules/ behave in practice. Select the TWO accurate statements.
+  A. Path-scoped rules load only when Claude works on matching files, which reduces irrelevant context and token usage.
+  B. A paths value can only be an exact file name, so a glob pattern isn't allowed.
+  C. A rule with paths: ["**/*.test.*"] applies to test files wherever they live in the repository.
+  D. A directory-level CLAUDE.md automatically applies to matching files in sibling directories.
+  E. Path-scoped rules only apply after a developer runs a slash command naming the rule file.
+KEY: AC
+WHY: YAML frontmatter paths fields contain glob patterns for conditional rule activation, loading only for matching files.
+  expl A [OK]: Correct. Conditional loading is the main advantage.
+  expl B [no]: Glob patterns are supported.
+  expl C [OK]: Correct. A recursive glob matches by file pattern, not by directory.
+  expl D [no]: Directory-level files are bound to their own directories.
+  expl E [no]: Rules apply automatically based on matching paths.
+
+=== P5-Q07 | S2 | D3 | task 3.4 | F | select 2 ===
+STEM: Select the TWO tasks that are best suited to direct execution rather than plan mode.
+  A. Adding a date validation conditional to one existing function with fully specified behavior.
+  B. Choosing between two integration approaches that need different infrastructure.
+  C. Restructuring a monolith into microservices, which requires decisions about service boundaries.
+  D. Migrating a logging library across roughly 45 files with several custom wrappers.
+  E. Fixing a crash where the stack trace points at one specific line in one function.
+KEY: AE
+WHY: Direct execution suits simple, well-scoped changes such as single-function bug fixes; plan mode suits large-scale, multi-file, or architectural work.
+  expl A [OK]: Correct. It is a well-scoped single-function change.
+  expl B [no]: Multiple valid approaches with different consequences call for plan mode.
+  expl C [no]: This is a large architectural task.
+  expl D [no]: A broad migration benefits from planning.
+  expl E [OK]: Correct. Scope is clear and local.
+
+=== P5-Q08 | S2 | D3 | task 3.2 | I | select 2 ===
+STEM: A team is documenting how skill frontmatter options work and where skill and command files live. Select the TWO accurate statements.
+  A. allowed-tools in the frontmatter restricts which tools the skill may use while it runs.
+  B. Commands in ~/.claude/commands/ are shared with teammates through version control.
+  C. Skills in ~/.claude/skills/ replace the project's skill of the same name for the whole team.
+  D. argument-hint restricts which tools a skill is allowed to use.
+  E. context: fork runs a skill in an isolated sub-agent context so verbose output doesn't pollute the main conversation.
+KEY: AE
+WHY: Skill frontmatter provides context: fork for isolation, allowed-tools for restriction, and argument-hint for parameter prompts; user-scoped files are personal.
+  expl A [OK]: Correct. It can limit a skill to safe operations.
+  expl B [no]: User-scoped commands are personal.
+  expl C [no]: Personal skills affect only the individual, and distinct names avoid collisions.
+  expl D [no]: argument-hint prompts for parameters; it doesn't restrict tools.
+  expl E [OK]: Correct. That is the purpose of context: fork.
+
+=== P5-Q09 | S2 | D3 | task 3.3 | F | select 1 ===
+STEM: A rule file has the frontmatter paths: ["terraform/**/*"]. When will Claude Code load this rule?
+  A. When it is working with files that match terraform/**/*, such as an edit to terraform/network/main.tf.
+  B. At the start of every session, regardless of which files are being edited.
+  C. Only for files directly inside terraform/, not for files in subdirectories.
+  D. Only when the developer types the rule's file name as a slash command.
+KEY: A
+WHY: Path-scoped rules load only when working on files matching the glob patterns in the paths field.
+  expl A [OK]: Correct. Path-scoped rules load for matching files.
+  expl B [no]: That is how unscoped instructions behave.
+  expl C [no]: The ** pattern includes subdirectories.
+  expl D [no]: Rules are not invoked manually.
+
+=== P5-Q10 | S2 | D3 | task 3.5 | I | select 1 ===
+STEM: A function must process 10,000 items within 200 ms and handle an empty list, a single item, and duplicate items. Previous attempts passed the happy path but were slow. Which workflow gives the most targeted feedback loop?
+  A. Describe the performance requirement in more detail and ask Claude to reason carefully about algorithmic complexity before writing any code, then ship it.
+  B. Implement first, then ask Claude to produce tests that pass for the implementation.
+  C. Write tests for correctness, edge cases, and the 200 ms requirement first, then have Claude implement and iterate by sharing failing test output.
+  D. Ask for three different implementations and choose the one that looks the most efficient.
+KEY: C
+WHY: Test-driven iteration writes test suites covering expected behavior, edge cases, and performance requirements first, then iterates by sharing test failures.
+  expl A [no]: Reasoning about complexity alone doesn't verify actual performance.
+  expl B [no]: Tests derived from the implementation won't catch missing requirements.
+  expl C [OK]: Correct. Tests make correctness and performance requirements verifiable.
+  expl D [no]: Appearance isn't measurement.
+
+=== P5-Q11 | S2 | D4 | task 4.2 | I | select 1 ===
+STEM: Claude Code must decide whether a new behavior calls for a unit test or an integration test. The choice is often ambiguous, and results vary. Which prompt addition is most helpful?
+  A. A reminder to think carefully before choosing and to be consistent from file to file.
+  B. A few examples of ambiguous cases showing which test type was chosen and why it was preferred over the alternative.
+  C. A rule that every behavior gets both a unit test and an integration test to avoid choosing.
+  D. An instruction to pick whichever test type is faster to write in each case.
+KEY: B
+WHY: Few-shot examples for ambiguous scenarios that show reasoning for why one action was chosen over plausible alternatives improve consistency and judgment.
+  expl A [no]: A reminder provides no criteria.
+  expl B [OK]: Correct. Reasoned examples teach the decision boundary.
+  expl C [no]: Doubling tests wastes effort and produces redundancy.
+  expl D [no]: Speed isn't the appropriate criterion.
+
+=== P5-Q12 | S2 | D4 | task 4.2 | C | select 1 ===
+STEM: The team's few-shot examples for Claude Code were copied from old modules that use callbacks. New generated code also uses callbacks, although the current house style is async/await. What is the right fix?
+  A. Add more callback examples to improve consistency, then rely on a code formatter to rewrite them.
+  B. Keep the callback examples and add a sentence to the prompt saying that async/await is the preferred style for all new code written from now on.
+  C. Replace the examples with ones drawn from current, preferred code written in async/await, since examples strongly shape generated style.
+  D. Remove all examples so that the model uses its own default style instead.
+KEY: C
+WHY: Few-shot examples shape output closely, so they must demonstrate acceptable, current patterns; examples of outdated patterns propagate them.
+  expl A [no]: A formatter cannot convert callback structures to async/await.
+  expl B [no]: Conflicting signals leave the examples dominant.
+  expl C [OK]: Correct. Examples should reflect the desired patterns.
+  expl D [no]: The default style may not match the house style either.
+
+=== P5-Q13 | S2 | D5 | task 5.4 | F | select 1 ===
+STEM: A developer asks what /compact does in a long Claude Code session. Which description is correct?
+  A. It reduces context usage by condensing the conversation so a long session can continue.
+  B. It permanently deletes the project's CLAUDE.md to save space in the repository.
+  C. It compresses source files on disk so that they take less space.
+  D. It restarts Claude Code with a different model that has a larger context window.
+KEY: A
+WHY: Use /compact to reduce context usage during extended exploration sessions when context fills with verbose discovery output.
+  expl A [OK]: Correct. /compact is used when context fills with verbose discovery output.
+  expl B [no]: /compact doesn't delete configuration files.
+  expl C [no]: It acts on conversation context, not on the file system.
+  expl D [no]: It doesn't change the model.
+
+=== P5-Q14 | S3 | D1 | task 1.1 | F | select 1 ===
+STEM: In an agentic loop for a research subagent, what should the code do when the response's stop_reason is 'tool_use'?
+  A. Discard the tool request and call the model again with the same messages to get a different response.
+  B. Execute the requested tool(s), append the tool results to the conversation, and send another request.
+  C. Return the response text to the coordinator as the final answer, since the model has finished.
+  D. Stop the loop and log an error because the subagent should not use tools.
+KEY: B
+WHY: The agentic loop continues when stop_reason is 'tool_use' by executing tools and returning results, and terminates when it is 'end_turn'.
+  expl A [no]: That ignores the request and wastes a call.
+  expl B [OK]: Correct. That continues the loop with new information.
+  expl C [no]: 'tool_use' means the model is waiting for tool results, not that it finished.
+  expl D [no]: Tool use is the normal path for an agent that has tools.
+
+=== P5-Q15 | S3 | D1 | task 1.1 | I | select 1 ===
+STEM: A research agent normally ends via stop_reason 'end_turn', but a few runs wander through dozens of searches. The team wants cost protection without cutting off legitimate deep research silently. What is the best design?
+  A. Use a hard iteration cap of 5 as the primary stopping rule, and return whatever has been gathered by then as the final report for the user without comment.
+  B. Stop the loop whenever the model writes a sentence beginning 'In summary', since that signals completion.
+  C. Keep stop_reason as the normal terminator, and add token and tool-call budgets that stop gracefully and produce a partial report stating what was not covered.
+  D. Remove all limits and rely on the model to decide when it has searched enough.
+KEY: C
+WHY: stop_reason should drive normal termination. Budget limits are safety backstops, and when triggered they should degrade gracefully with disclosed gaps rather than silently truncate.
+  expl A [no]: A small cap as the primary mechanism cuts legitimate research short without disclosure.
+  expl B [no]: Parsing phrases is an anti-pattern.
+  expl C [OK]: Correct. Budgets protect cost, and graceful degradation avoids silent truncation.
+  expl D [no]: Without limits, rare runaway runs can cost a great deal.
+
+=== P5-Q16 | S3 | D1 | task 1.3 | I | select 1 ===
+STEM: A coordinator spawns the synthesis subagent. Which of the following is the most complete context packet to include in its prompt?
+  A. A short summary of the findings in prose, without sources, to keep the prompt compact.
+  B. The research question and quality criteria, the findings as structured records (claim, excerpt, source, date), noted conflicts, and the required format.
+  C. The research question and the instruction 'summarize everything found so far', since the subagent can look up the rest from the shared workspace when it starts.
+  D. The complete raw text of all fetched pages, with no structure, so that no detail is lost.
+KEY: B
+WHY: Subagent prompts must contain the needed context explicitly, ideally as structured data separating content from metadata (source, date) plus goals and quality criteria.
+  expl A [no]: Dropping sources loses attribution for the final report.
+  expl B [OK]: Correct. It provides goals, evidence with provenance, and expectations.
+  expl C [no]: The subagent has no access to what was found.
+  expl D [no]: Unstructured bulk is hard to use and consumes context.
+
+=== P5-Q17 | S3 | D1 | task 1.2 | I | select 1 ===
+STEM: Two web research subagents were asked to research 'AI regulation'. Their results overlap heavily, leaving other relevant areas thin. How should the coordinator change its delegation?
+  A. Keep the same assignment but have the synthesis subagent remove duplicate results later.
+  B. Replace the two subagents with a single one that researches the whole topic sequentially.
+  C. Ask both subagents to work harder and to be more thorough, in the hope that they will find different material by chance on the next run, without changing assignments.
+  D. Partition the scope: assign distinct subtopics or source types to each subagent, such as regions, regulatory bodies, and industry commentary.
+KEY: D
+WHY: Partition research scope across subagents to minimize duplication, for example by assigning distinct subtopics or source types.
+  expl A [no]: Deduplication afterward doesn't fill the coverage gap.
+  expl B [no]: This loses parallelism and risks narrow coverage.
+  expl C [no]: Without distinct assignments, overlap persists.
+  expl D [OK]: Correct. Partitioning minimizes duplication and widens coverage.
+
+=== P5-Q18 | S3 | D1 | task 1.1 | C | select 1 ===
+STEM: A pre-call hook blocks the web fetch tool for a disallowed domain by raising an exception that ends the agent loop. The user receives an error instead of a report. What is the better behavior?
+  A. Remove the hook, since blocking domains should be handled by telling the model in the prompt.
+  B. Silently return an empty result for the blocked call so the model assumes there is nothing at that domain.
+  C. Let the exception end the loop, because a blocked call should always abort the whole task for safety reasons and report the policy violation to the user.
+  D. Have the hook return a tool_result explaining that the call was blocked and why, so the model can continue with another source or note the gap.
+KEY: D
+WHY: Hooks enforce rules deterministically, and their outcomes should flow back into the loop as tool results so that the model can recover or note the limitation.
+  expl A [no]: The prompt cannot guarantee compliance.
+  expl B [no]: Silent empty results mislead the model about the cause.
+  expl C [no]: Aborting loses all other work.
+  expl D [OK]: Correct. The loop continues, and the model can adapt.
+
+=== P5-Q19 | S3 | D1 | task 1.2 | I | select 1 ===
+STEM: The research workflow has these steps: web search, document analysis of the user's PDFs, synthesis, and report writing. Web search and document analysis are independent of each other. Which execution plan is most appropriate?
+  A. Run all four steps in parallel and merge the results at the end.
+  B. Run all four steps strictly one after another, so every step sees the output of the one before.
+  C. Run web search and document analysis in parallel, then run synthesis once both complete, then report writing.
+  D. Run synthesis first so that it can tell search and analysis what to look for.
+KEY: C
+WHY: Independent subagent tasks can run in parallel through multiple Task calls in one response; dependent steps run after their inputs are available.
+  expl A [no]: Synthesis needs the findings, and the report needs the synthesis.
+  expl B [no]: Search and analysis don't depend on each other, so waiting wastes time.
+  expl C [OK]: Correct. Independent work is parallelized and dependent work follows.
+  expl D [no]: Synthesis depends on the findings from search and analysis.
+
+=== P5-Q20 | S3 | D1 | task 1.3 | I | select 1 ===
+STEM: The coordinator invokes the document analysis subagent for batch 1 of PDFs, and later invokes it again for batch 2, assuming the subagent will remember the entities identified in batch 1. The batch 2 results contradict batch 1 naming. What is the correct fix?
+  A. Run batch 2 before batch 1 so that the more complex documents are processed first.
+  B. Tell the subagent in the batch 2 prompt to remember what it learned during batch 1 and to keep the entity names consistent with its earlier work, whatever they were.
+  C. Use a larger model for batch 2 because it can better infer earlier decisions.
+  D. Pass the batch 1 results (entity names and mappings) explicitly in the batch 2 prompt, since subagents don't share memory between invocations.
+KEY: D
+WHY: Subagents do not automatically share memory between invocations; needed context must be explicitly provided in the prompt.
+  expl A [no]: Order doesn't create shared memory.
+  expl B [no]: It has no such memory to draw on.
+  expl C [no]: Inference can't recover information that isn't present.
+  expl D [OK]: Correct. Each invocation starts without memory of previous ones.
+
+=== P5-Q21 | S3 | D1 | task 1.7 | I | select 1 ===
+STEM: A research session on regional energy prices was started three days ago. The searches returned news and price tables that have since been updated. The user asks for a refreshed report. Which approach is most reliable?
+  A. Resume the old session and tell the model that some prices may have changed, then use its best judgment.
+  B. Fork the old session and ask the fork to trust the earlier tool results.
+  C. Resume the old session and ask for a refreshed report using the data that is already in its history, which saves the cost of repeating the searches.
+  D. Start a new session with a structured summary of the research plan and verified background, and re-run the searches for time-sensitive data.
+KEY: D
+WHY: Starting a new session with a structured summary is more reliable than resuming with stale tool results.
+  expl A [no]: The model can't know which values changed.
+  expl B [no]: A fork inherits the same stale results.
+  expl C [no]: The history contains outdated prices.
+  expl D [OK]: Correct. Stale tool results shouldn't be carried forward.
+
+=== P5-Q22 | S3 | D2 | task 2.2 | C | select 1 ===
+STEM: The web search subagent requests a research article and receives HTTP 403 from a paywalled site. The tool returns 'Request failed'. The agent retries three times. What is the best tool-level response, and the right recovery?
+  A. Return an empty successful result so the subagent moves on without any message.
+  B. Return a transient error with isRetryable true so that the subagent keeps trying with increasing delays until the paywall eventually disappears or the access token is refreshed.
+  C. Return the HTML of the paywall page as the article content so the subagent can try to read it.
+  D. Return a permission-category, non-retryable error naming the cause; the subagent seeks an open-access version or another source, and reports a gap if none exists.
+KEY: D
+WHY: Structured errors distinguish permission failures from transient ones and include retryability, enabling alternatives and honest coverage reporting.
+  expl A [no]: That hides the gap and implies nothing was found.
+  expl B [no]: A paywall won't resolve on retry.
+  expl C [no]: The paywall page isn't the article and would pollute the findings.
+  expl D [OK]: Correct. The error guides recovery and avoids wasted retries.
+
+=== P5-Q23 | S3 | D2 | task 2.4 | I | select 1 ===
+STEM: The team has an MCP tool search_licensed_papers that searches a licensed database and returns full metadata and abstracts. Its description reads 'Searches papers.' The research agent keeps using the built-in WebSearch instead. What should be done?
+  A. Remove WebSearch from all agents, so the licensed tool is the only search option anywhere in the system and no agent can be tempted by a built-in tool.
+  B. Add a rule in the system prompt: 'never use WebSearch under any circumstances'.
+  C. Expand the MCP tool's description to explain what it covers, what it returns, and when it is preferable to a general web search.
+  D. Rename the tool to something longer and hope that its name attracts the model.
+KEY: C
+WHY: Enhance MCP tool descriptions to explain capabilities and outputs in detail so the agent doesn't prefer built-in tools over more capable MCP tools.
+  expl A [no]: This breaks legitimate web research.
+  expl B [no]: An absolute rule overrides judgment for tasks that need the web.
+  expl C [OK]: Correct. A richer description lets the agent recognize the better tool.
+  expl D [no]: Names alone don't convey coverage or advantages.
+
+=== P5-Q24 | S3 | D2 | task 2.3 | I | select 1 ===
+STEM: The research coordinator has been given the web search, document loading, and verification tools of its subagents plus 20 other tools, 'for flexibility'. It increasingly does research itself instead of delegating and picks tools poorly. What is the best change?
+  A. Keep the tool set but add a paragraph to the prompt telling the coordinator not to use specialist tools directly and to delegate such work.
+  B. Give the subagents the same 20 extra tools so that everyone has the same capabilities.
+  C. Force tool_choice to the Task tool on every turn so that the coordinator always delegates.
+  D. Restrict the coordinator to a small set of orchestration tools, chiefly Task, and leave the specialist tools with the subagents.
+KEY: D
+WHY: Agents perform better with scoped tools; coordinators should hold orchestration tools while specialists hold domain tools.
+  expl A [no]: Prompt restraint is probabilistic, and the large tool set remains.
+  expl B [no]: This worsens selection for every agent.
+  expl C [no]: Forcing Task every turn prevents the coordinator from ever finishing or synthesizing.
+  expl D [OK]: Correct. Role-specific tool sets keep delegation clean and selection reliable.
+
+=== P5-Q25 | S3 | D2 | task 2.1 | F | select 2 ===
+STEM: Select the TWO elements that most improve a tool description for reliable selection among similar tools.
+  A. Input formats and example queries that illustrate typical use.
+  B. Enthusiastic wording stating that the tool is fast, powerful, and reliable.
+  C. The tool's internal ticket number and the date it was last deployed.
+  D. Boundary statements describing when to use this tool versus a similar one.
+  E. A reduction of the description to under five words for readability.
+KEY: AD
+WHY: Tool descriptions should include input formats, example queries, edge cases, and boundary explanations.
+  expl A [OK]: Correct. Examples and formats help the model match requests to the tool.
+  expl B [no]: Promotional language adds no selection information.
+  expl C [no]: Administrative metadata doesn't help choose a tool.
+  expl D [OK]: Correct. Boundaries prevent misrouting.
+  expl E [no]: Minimal descriptions cause unreliable selection.
+
+=== P5-Q26 | S3 | D2 | task 2.1 | I | select 1 ===
+STEM: Two tools in the research agent, get_info and fetch_data, have nearly identical descriptions. The first actually queries an internal knowledge base and the second downloads public web pages. The agent uses them interchangeably. What is the best fix?
+  A. Combine the two into a single get_data tool with a source argument.
+  B. Rename them to reflect their roles (for example search_internal_kb and fetch_web_page) and rewrite each description with its source, inputs, outputs, and use.
+  C. Add a third tool that decides which of the two to call and then calls it.
+  D. Keep the names and add a one-line prompt: 'prefer get_info for questions about the company and fetch_data for questions about the outside world' whenever possible.
+KEY: B
+WHY: Rename tools and update descriptions to eliminate functional overlap; clear differentiation of purpose, inputs, and outputs fixes misrouting.
+  expl A [no]: This hides two different capabilities behind a vague interface.
+  expl B [OK]: Correct. Distinct names and descriptions eliminate the overlap.
+  expl C [no]: A router tool adds complexity without fixing the descriptions.
+  expl D [no]: A preference rule doesn't clarify the purpose and might misroute web fetches.
+
+=== P5-Q27 | S3 | D4 | task 4.6 | F | select 3 ===
+STEM: Select the THREE statements about review architectures that are correct.
+  A. A model that generated content retains its reasoning context, which makes it less likely to question its own decisions in the same session.
+  B. Splitting a large review into per-file passes plus a cross-file integration pass helps avoid attention dilution and contradictory findings.
+  C. A larger context window eliminates attention dilution, so a large review no longer needs to be split.
+  D. Telling the same session to act as a skeptical reviewer is equivalent to using a separate instance.
+  E. Extended thinking removes the need for an independent reviewer on important changes.
+  F. An independent instance without the generator's reasoning context is more effective at catching subtle issues than self-review instructions or extended thinking.
+KEY: ABF
+WHY: Self-review is limited by retained reasoning context; independent instances and multi-pass splits improve review quality.
+  expl A [OK]: Correct. This is the self-review limitation.
+  expl B [OK]: Correct. Focused passes improve consistency.
+  expl C [no]: Window size does not fix attention quality.
+  expl D [no]: The retained context still biases the review.
+  expl E [no]: It does not provide independence from the generator's context.
+  expl F [OK]: Correct. Independence matters.
+
+=== P5-Q28 | S3 | D5 | task 5.3 | C | select 1 ===
+STEM: A final research report lists all findings in one uniform bulleted list. Some bullets come from multiple strong sources, while one topic area had no accessible sources at all, and two bullets are contested between sources. Readers cannot tell them apart. How should the synthesis be structured?
+  A. Remove contested findings and gaps from the report to keep it clean and authoritative.
+  B. Keep the single list but order the bullets by importance, trusting the reader to infer the level of confidence from each bullet's position in the list.
+  C. Use separate sections for well-established findings, contested findings with each source's position, and a coverage section stating gaps from unavailable sources.
+  D. Add a footer note saying 'some findings may be uncertain' without identifying which ones.
+KEY: C
+WHY: Synthesis output should include coverage annotations indicating which findings are well supported and which areas have gaps, and should distinguish well-established from contested findings.
+  expl A [no]: Omitting them overstates certainty.
+  expl B [no]: Order doesn't express evidence strength or gaps.
+  expl C [OK]: Correct. Structure reveals confidence and gaps.
+  expl D [no]: A generic caveat is not actionable.
+
+=== P5-Q29 | S3 | D5 | task 5.3 | I | select 1 ===
+STEM: A subagent searched 12 reputable sources for studies on a narrow topic and found none. What should it report?
+  A. Nothing at all, since an empty result has no value to the coordinator.
+  B. A failure with category transient and isRetryable true, so that the coordinator retries the search repeatedly for this topic until something is found.
+  C. A fabricated summary of related studies to avoid reporting an empty result.
+  D. A successful result with zero matches, stating the queries and sources searched, so the coordinator can report 'no studies found' accurately.
+KEY: D
+WHY: Distinguish access failures from valid empty results; a successful query with no matches is a legitimate result and should be reported with what was searched.
+  expl A [no]: The absence of studies after a documented search is itself a finding.
+  expl B [no]: Nothing failed, and retries won't create studies.
+  expl C [no]: Fabrication is unacceptable.
+  expl D [OK]: Correct. A completed search with no matches is a valid, informative result.
+
+=== P5-Q30 | S5 | D1 | task 1.6 | I | select 1 ===
+STEM: Your CI job generates tests for new code. Currently one request produces tests that duplicate existing ones and miss untested branches. Which restructuring is best?
+  A. Generate tests only for functions that changed, ignoring what the test suite already contains.
+  B. A chain: analyze new code and existing tests for gaps, propose uncovered scenarios, generate tests for those, then run them and fix failures.
+  C. A single request telling Claude to generate as many tests as possible for every function it can find, so that coverage is as high as possible.
+  D. Generate tests twice with different seeds and merge both sets into the repository.
+KEY: B
+WHY: Prompt chaining breaks tasks into focused sequential steps; test generation benefits from knowing existing tests and gaps.
+  expl A [no]: Ignoring existing tests causes duplication.
+  expl B [OK]: Correct. Each step builds on the previous one and focuses on one task.
+  expl C [no]: Volume produces duplicates and low-value tests.
+  expl D [no]: Merging two outputs doubles duplication.
+
+=== P5-Q31 | S5 | D1 | task 1.6 | C | select 1 ===
+STEM: A PR changes the return type of normalizeAddress() in utils.ts, and a function in checkout.ts, untouched by the PR, relies on the old return type. Per-file review of the diff reports nothing. How should the integration pass be designed to catch this?
+  A. Add an instruction to each per-file pass to speculate about which other files might be affected.
+  B. Give the integration pass only the diff and ask it to think harder about possible side effects on the rest of the codebase and to list them in detail for the developer.
+  C. Rely on the unit tests to catch it and skip any cross-file analysis in the review.
+  D. Have the integration pass find callers of the changed interface (for example with Grep) and check those call sites against the new contract, even outside the diff.
+KEY: D
+WHY: A separate integration pass examines cross-file data flow; for interface changes this must include dependent code outside the diff.
+  expl A [no]: Speculation without looking at the call sites is unreliable.
+  expl B [no]: The affected code isn't in the diff, so it cannot be evaluated.
+  expl C [no]: Tests may not cover the call site, and the review is meant to catch such issues.
+  expl D [OK]: Correct. Cross-file breakage requires examining unchanged dependents.
+
+=== P5-Q32 | S5 | D1 | task 1.6 | C | select 1 ===
+STEM: A nightly job generates tests for a legacy repository. On the first night, the plan was fixed: tests for modules in alphabetical order. The agent discovers that module 'ledger' depends on a shared 'money' module with no tests, and ledger tests keep failing because of it. What is the best handling?
+  A. Adapt the plan: prioritize creating tests for the 'money' module first, then return to ledger, updating the plan as dependencies are discovered.
+  B. Restart the nightly job from scratch each time a dependency is found.
+  C. Continue in alphabetical order and accept the failing ledger tests until the 'money' module is eventually reached, since the plan was agreed in advance.
+  D. Skip any module that has failing tests and report them as untestable.
+KEY: A
+WHY: Open-ended tasks benefit from adaptive plans: map structure, prioritize high-impact areas, and adjust as dependencies are discovered.
+  expl A [OK]: Correct. Adaptive decomposition responds to discovered dependencies.
+  expl B [no]: Restarting wastes completed work.
+  expl C [no]: A fixed order produces known-broken results.
+  expl D [no]: The modules are testable once the dependency is handled.
+
+=== P5-Q33 | S5 | D2 | task 2.2 | C | select 1 ===
+STEM: In CI, the MCP tool that posts review comments fails because the PR comes from a fork and the token has no write permission. It returns 'Failed to post'. The agent retries four times. What is the best tool design and agent behavior?
+  A. Return a transient error so the agent keeps retrying with backoff until the token is refreshed by an administrator or the job times out, whichever happens first.
+  B. Return a permission-category, non-retryable error with a clear description; the agent stops retrying and outputs the findings to the job summary instead.
+  C. Return success without posting, so that the CI check passes and nobody is blocked.
+  D. Return the stack trace of the HTTP client so that the model can work out the cause.
+KEY: B
+WHY: Structured errors with categories and retryability prevent wasted retries, and non-retryable permission errors should lead to an alternative path.
+  expl A [no]: The permission problem won't resolve itself during the job.
+  expl B [OK]: Correct. The structured error prevents futile retries and the findings are still delivered.
+  expl C [no]: The comments were never delivered, and the pipeline would hide that.
+  expl D [no]: Unstructured traces are noisy and don't tell the agent whether to retry.
+
+=== P5-Q34 | S5 | D2 | task 2.4 | F | select 1 ===
+STEM: A CI job needs the Jira MCP server to read issue details with a token. How should the .mcp.json entry supply the token without committing it?
+  A. Add the token to the project's CLAUDE.md so the agent can read it when needed.
+  B. Ask the model to prompt a developer for the token each time the job runs.
+  C. Write the token as a literal string in .mcp.json, since the repository is private.
+  D. Reference an environment variable, such as ${JIRA_TOKEN}, and provide the value from the CI system's secret store.
+KEY: D
+WHY: Project-scoped .mcp.json supports environment variable expansion (for example ${GITHUB_TOKEN}) for credential management without committing secrets.
+  expl A [no]: CLAUDE.md is committed and would expose the secret.
+  expl B [no]: CI is non-interactive and cannot prompt.
+  expl C [no]: A literal secret in a file is exposed to everyone with repository access.
+  expl D [OK]: Correct. Environment variable expansion keeps secrets out of version control.
+
+=== P5-Q35 | S5 | D3 | task 3.6 | C | select 1 ===
+STEM: A CI step runs 'claude "Review this PR"' and hangs, and when it works the output is free-form text that is hard to post as inline comments. The review should also follow the project's review criteria. Which combination fixes all three problems?
+  A. Run with -p and ask in the prompt for the output in a particular markdown layout, without any CLAUDE.md.
+  B. Run interactively with a here-document supplying answers to any prompts, and parse the text with regular expressions.
+  C. Run in non-interactive mode with -p, request --output-format json with a --json-schema for findings, and document review criteria in CLAUDE.md.
+  D. Use --output-format json without -p and put the review criteria in the user's ~/.claude/CLAUDE.md.
+KEY: C
+WHY: -p runs Claude Code non-interactively; --output-format json with --json-schema yields machine-parseable findings; CLAUDE.md provides project context such as review criteria.
+  expl A [no]: Markdown layout drifts, and criteria are not persisted.
+  expl B [no]: This is fragile and doesn't give structured output.
+  expl C [OK]: Correct. Each element solves one of the problems.
+  expl D [no]: Without -p the job may still hang, and CI doesn't read a developer's personal file.
+
+=== P5-Q36 | S5 | D3 | task 3.6 | C | select 1 ===
+STEM: Before turning Claude's PR review into a blocking check, the team wants evidence about how good it is. What is the most informative evaluation?
+  A. Ask developers whether the comments seem helpful on their next ten PRs and decide by general impression, then switch on blocking if most say yes.
+  B. Run it on a labeled set of past PRs with known defects and known-clean changes, and measure precision and recall, including per category.
+  C. Count how many comments Claude posts per PR and treat higher counts as better coverage.
+  D. Run the review twice on each PR and measure only whether the two runs agree.
+KEY: B
+WHY: Evaluate against known defects to measure false positives and false negatives; this supports decisions on blocking versus advisory. (Evaluation harness design is supplemental practice relating to CI review quality.)
+  expl A [no]: Impressions miss missed defects and are subjective.
+  expl B [OK]: Correct. Known defects allow measurement of both error types.
+  expl C [no]: Volume does not equal accuracy.
+  expl D [no]: Agreement doesn't show correctness. Both runs can be wrong.
+
+=== P5-Q37 | S5 | D3 | task 3.6 | I | select 1 ===
+STEM: A team's pipeline runs tests, a Claude review, and then automatically deploys every merged change to production without human approval. Leadership says the goal is continuous integration and a human-approved release process. What should be changed?
+  A. Keep automated build, test, and review on every PR (CI), but add a manual approval gate before production, which makes the release continuous delivery.
+  B. Make the Claude review the approval gate that deploys to production when it finds no issues.
+  C. Keep everything as is, because deploying automatically is what continuous integration means.
+  D. Remove automated testing from the pipeline, since CI is only about merging code frequently and tests slow down the integration of every change into the main branch.
+KEY: A
+WHY: CI automates integration, build, and test; continuous delivery keeps every change releasable with a manual release decision; continuous deployment releases automatically. (General CI/CD knowledge; supplemental to the exam guide.)
+  expl A [OK]: Correct. Automated deployment to production without approval is continuous deployment.
+  expl B [no]: A model review is not a substitute for human approval of releases.
+  expl C [no]: Automatic production release is continuous deployment, not CI.
+  expl D [no]: CI includes automated build and test.
+
+=== P5-Q38 | S5 | D3 | task 3.6 | I | select 1 ===
+STEM: The CI job that runs Claude Code only needs to read the repository and post review comments. It currently runs with a token that can push branches and change repository settings. What is the best change?
+  A. Run it with a token limited to reading code and writing PR comments, and keep any write access to branches or settings out of that job.
+  B. Keep the broad token and add a prompt instruction saying that the job must never push branches or edit repository settings under any circumstances.
+  C. Remove authentication from the job so that it fails if it tries to do anything sensitive.
+  D. Keep the broad token but log every action, and review the logs weekly.
+KEY: A
+WHY: Apply least privilege to automated agents: grant only the permissions the role requires. (Security practice; supplemental to the exam guide.)
+  expl A [OK]: Correct. Least privilege limits the damage of any mistake or injection.
+  expl B [no]: A prompt cannot technically prevent those actions.
+  expl C [no]: Without authentication it also cannot read or comment.
+  expl D [no]: Logs detect misuse after the fact.
+
+=== P5-Q39 | S5 | D4 | task 4.6 | C | select 1 ===
+STEM: To review generated code independently, a team passes the independent reviewer the diff plus the full chain of reasoning and commentary that the generating session produced. The reviewer mostly agrees with the generator. What should change?
+  A. Give the reviewer the diff, requirements, and project criteria, but not the generator's reasoning, so that it evaluates the change on its own.
+  B. Give the reviewer even more of the generator's reasoning and commentary, so that it understands the intent fully before judging the change and avoids false alarms.
+  C. Use the same session as the generator for the review, with a prompt telling it to be strict.
+  D. Ask the reviewer to disagree with the generator at least twice per review.
+KEY: A
+WHY: Independent review instances without prior reasoning context are more effective at catching subtle issues; passing the generator's reasoning defeats the independence.
+  expl A [OK]: Correct. Independence requires withholding the generator's reasoning context.
+  expl B [no]: More reasoning increases anchoring on the generator's view.
+  expl C [no]: The same session retains the reasoning that it was supposed to question.
+  expl D [no]: Forced disagreement produces noise rather than insight.
+
+=== P5-Q40 | S5 | D4 | task 4.6 | I | select 1 ===
+STEM: To reduce noisy findings, a team runs the full review three times and posts only findings that appear in at least two runs. After a month, real bugs found in only one run are being missed. What is the better approach to precision?
+  A. Keep the voting and lower the severity of all findings to hide the missed ones.
+  B. Give the review explicit criteria for what to report and skip and use focused per-file passes, instead of requiring agreement among runs.
+  C. Require agreement in all three runs instead of two, and drop single-run findings entirely, for even stronger filtering of the noisy findings that developers complain about.
+  D. Run the review five times and post the union of all findings.
+KEY: B
+WHY: Consensus voting can suppress real bugs that are only intermittently detected; explicit criteria and multi-pass structure improve precision more directly.
+  expl A [no]: Lowering severity doesn't recover missed bugs.
+  expl B [OK]: Correct. It addresses the cause of noise without suppressing intermittent true findings.
+  expl C [no]: This suppresses even more true findings.
+  expl D [no]: The union increases noise.
+
+=== P5-Q41 | S5 | D4 | task 4.1 | C | select 1 ===
+STEM: Developers distrust the review because it flags minor style preferences and local naming habits as problems, mixed in with real bugs. The prompt says 'only report high-confidence findings'. Which change best improves precision?
+  A. State the categories to report (bugs, security issues, correctness risks) and the categories to skip (minor style, locally accepted patterns), not confidence.
+  B. Add the instruction 'be conservative' to the end of the prompt.
+  C. Strengthen the confidence instruction to 'only report findings you are 95% sure about, and say nothing about anything less certain than that in the diff'.
+  D. Ask the model to rank all findings and post only the top three per PR.
+KEY: A
+WHY: General instructions like 'be conservative' or 'only report high-confidence findings' fail to improve precision compared with specific categorical criteria.
+  expl A [OK]: Correct. Specific categorical criteria outperform confidence filtering.
+  expl B [no]: General instructions don't improve precision.
+  expl C [no]: A numeric confidence demand doesn't define what counts as a real problem.
+  expl D [no]: Ranking doesn't remove style noise and may drop real issues.
+
+=== P5-Q42 | S5 | D4 | task 4.6 | I | select 1 ===
+STEM: A team wants a review pipeline for large PRs that balances depth, cross-file coverage, and trust in blocking findings. Which design is most sound?
+  A. Per-file passes only, with all findings posted directly as blocking comments.
+  B. One pass over the whole PR, followed by a second pass by the same session to double-check and refine all of its own findings before posting.
+  C. Per-file local passes, then a cross-file integration pass, then an independent verification pass on any finding that would block the merge.
+  D. Three parallel full-PR passes with majority voting and no integration pass.
+KEY: C
+WHY: Multi-pass reviews split local and integration analysis, and independent instances verify high-impact findings.
+  expl A [no]: No cross-file analysis, and unverified findings block merges.
+  expl B [no]: Single-pass attention dilution remains, and self-review is weak.
+  expl C [OK]: Correct. Depth, integration, and independent verification of high-impact findings.
+  expl D [no]: Voting can suppress true findings and nothing targets cross-file flows.
+
+=== P5-Q43 | S5 | D5 | task 5.5 | F | select 1 ===
+STEM: A team reports that its Claude review is 'right 92% of the time' and wants to make all categories blocking. Why is this insufficient evidence?
+  A. An overall figure can hide poor accuracy in particular categories, so precision should be measured per finding category before choosing which, if any, to block on.
+  B. Percentages above 90 are always unreliable because accuracy cannot be measured accurately at that level, so any figure that high should be discounted by half.
+  C. Blocking depends only on how fast the review runs, not on its accuracy.
+  D. The figure is insufficient only if it was computed by developers instead of by the model.
+KEY: A
+WHY: Aggregate accuracy metrics can mask poor performance on specific segments; validate accuracy by category before relying on it.
+  expl A [OK]: Correct. Aggregate accuracy may mask weak segments.
+  expl B [no]: Accuracy can be measured at any level with adequate data.
+  expl C [no]: Accuracy matters directly for blocking decisions.
+  expl D [no]: Who computes it is not the issue.
+
+=== P5-Q44 | S6 | D1 | task 1.5 | I | select 1 ===
+STEM: Compliance wants every write the extraction agent makes to the ledger to be traceable to the exact source document and extraction run, regardless of whether the model remembers to record this. Which implementation is most reliable?
+  A. A prompt instruction asking the agent to include a source document ID and a run ID in the free-text note of every write it makes to the ledger.
+  B. A pre-call hook on the write tool that records the record hash, source document ID, and run ID to an audit log before allowing the call.
+  C. A weekly script that reconstructs which document produced each ledger entry by matching amounts.
+  D. An optional field in the schema where the model may add a reference to the source if it chooses.
+KEY: B
+WHY: Hooks that intercept outgoing tool calls provide deterministic enforcement and instrumentation, independent of model compliance.
+  expl A [no]: The note may be omitted or wrong, and it isn't a durable audit record.
+  expl B [OK]: Correct. The hook executes on every write, so logging cannot be skipped.
+  expl C [no]: Matching amounts is ambiguous and happens after the fact.
+  expl D [no]: Optional model-supplied fields aren't guaranteed.
+
+=== P5-Q45 | S6 | D1 | task 1.5 | F | select 1 ===
+STEM: A document-management MCP tool returns status as numeric codes (1 received, 2 processed, 3 rejected). The extraction agent sometimes treats 3 as a success because it appears larger. What is the best fix?
+  A. A PostToolUse hook that maps numeric codes to labeled statuses before the model sees the result.
+  B. A request to the tool's owners to renumber the codes so that failures are small numbers.
+  C. A system prompt paragraph that says higher status codes are worse and should be treated as failures.
+  D. An example showing a status code 3 being handled correctly, placed in the extraction prompt.
+KEY: A
+WHY: PostToolUse hooks can normalize numeric status codes and other heterogeneous formats before the model processes tool results.
+  expl A [OK]: Correct. Hooks normalize results before the model processes them.
+  expl B [no]: That depends on others and doesn't fix existing consumers.
+  expl C [no]: The rule is easy to misapply and needs the model to translate each time.
+  expl D [no]: One example doesn't guarantee consistent interpretation.
+
+=== P5-Q46 | S6 | D1 | task 1.5 | C | select 1 ===
+STEM: In a batch of 500 documents, a bug in a new prompt version causes 40% of extractions to fail validation. The pipeline continues posting the 60% that passed to the ledger, and the review team is overwhelmed. What deterministic safeguard fits best?
+  A. A circuit-breaker hook that halts automated posting and redirects the batch to review when the validation failure rate crosses a set threshold.
+  B. A rule that retries each failed document indefinitely until it validates.
+  C. A nightly cleanup job that removes bad ledger entries after the batch finishes.
+  D. A prompt instruction telling the agent to slow down and become more careful when it notices that many of the documents it processes fail validation.
+KEY: A
+WHY: Hooks and gates can enforce policy deterministically at system level, including halting and redirecting when error rates indicate systemic failure.
+  expl A [OK]: Correct. It stops a systemic problem from propagating and routes to humans.
+  expl B [no]: Unbounded retries may never succeed and could fabricate values.
+  expl C [no]: Cleanup after posting leaves bad data in the system in the meantime.
+  expl D [no]: The agent doesn't see batch-level statistics and prompts aren't guarantees.
+
+=== P5-Q47 | S6 | D2 | task 2.3 | I | select 1 ===
+STEM: The extraction agent occasionally needs a currency exchange rate. The finance MCP server exposes 17 tools, including payment and ledger operations. What is the best way to provide this capability?
+  A. Connect the agent to all 17 finance tools so that it can handle any financial need it encounters without asking for new access later.
+  B. Ask the agent to estimate exchange rates from its general knowledge, which is usually close.
+  C. Give the agent a narrow get_fx_rate tool for the one lookup it needs, and keep the rest of the finance tools out of its tool set.
+  D. Pass the rate table in every prompt regardless of whether a conversion is needed.
+KEY: C
+WHY: Provide scoped cross-role tools for specific needs instead of broad tool access, preserving least privilege and selection reliability.
+  expl A [no]: More tools degrade selection and expose payment operations.
+  expl B [no]: Estimated rates produce incorrect monetary values.
+  expl C [OK]: Correct. A scoped tool meets the need without exposing sensitive operations.
+  expl D [no]: This wastes context and may be stale.
+
+=== P5-Q48 | S6 | D2 | task 2.3 | I | select 1 ===
+STEM: The extraction agent currently holds both extract_invoice and post_to_ledger. An incorrect extraction was posted before validation. The team wants to prevent the agent from posting at all. What is the best structure?
+  A. Keep post_to_ledger but set tool_choice to 'auto' so the agent uses it only when needed.
+  B. Keep post_to_ledger and rename it submit_for_review so that the agent treats it more carefully.
+  C. Remove post_to_ledger from the agent's tools, and have deterministic pipeline code post only records that have passed validation.
+  D. Keep post_to_ledger and instruct the agent to call it only after the user confirms the extraction, as the final step of each document.
+KEY: C
+WHY: Restrict each agent to the tools needed for its role; side-effect actions can be moved to deterministic code after validation.
+  expl A [no]: 'auto' leaves the decision to the model.
+  expl B [no]: Renaming doesn't change what the tool does.
+  expl C [OK]: Correct. The agent cannot call what it does not have, and posting follows verified checks.
+  expl D [no]: Users aren't present in batch processing, and prompt compliance isn't guaranteed.
+
+=== P5-Q49 | S6 | D2 | task 2.2 | I | select 1 ===
+STEM: The ledger API rejects a posting with HTTP 422 and a list of field errors, for example 'cost_center: unknown code'. The MCP wrapper converts this into 'Posting failed'. The agent retries unchanged. What is the best wrapper behavior?
+  A. Swallow the error and report success to avoid blocking the pipeline.
+  B. Return 'Posting failed' with a hint that the agent should try again after a short wait.
+  C. Return a transient error so that the retry logic handles it automatically, since most 4xx errors clear after a while and the posting will then go through.
+  D. Return an isError result with category validation, isRetryable false, and the field-level errors, so the agent or pipeline can correct the input.
+KEY: D
+WHY: Structured errors with category, retryability, and descriptions let agents choose appropriate recovery; validation errors require correcting input.
+  expl A [no]: Hiding failure leads to missing ledger entries.
+  expl B [no]: Waiting doesn't fix an invalid cost center.
+  expl C [no]: Validation errors are not transient.
+  expl D [OK]: Correct. The details allow a corrected resubmission rather than blind retries.
+
+=== P5-Q50 | S6 | D2 | task 2.1 | I | select 1 ===
+STEM: extract_invoice returns amounts as integers such as 125000, but the description says only 'amount of the invoice'. Downstream agents sometimes treat the value as dollars and sometimes as cents. How should the tool be improved?
+  A. Return the amount as a formatted string such as '$1,250.00' for readability.
+  B. Leave the contract unchanged and ask downstream agents to infer the unit from magnitude.
+  C. State in the description and schema that amounts are integers in minor currency units (cents) alongside a separate ISO currency code field.
+  D. Add a sentence to the description saying that the amount is 'accurate', 'verified', and 'should be used carefully' by every downstream agent that reads it.
+KEY: C
+WHY: Tool descriptions and schemas should specify outputs precisely, including units and formats, to prevent misinterpretation by the model.
+  expl A [no]: Formatted strings are harder to validate and may lose the currency code.
+  expl B [no]: Inference is unreliable for small and large amounts.
+  expl C [OK]: Correct. Precise output contracts prevent misinterpretation.
+  expl D [no]: Vague assurances do not define units.
+
+=== P5-Q51 | S6 | D4 | task 4.4 | I | select 1 ===
+STEM: A validation-retry loop sends specific errors back to the model for up to five rounds. For some documents it still fails every time, and the retries consume budget. What is the best bounded design?
+  A. Raise the limit to twenty rounds so that the model has more chances to get it right, with the validation error attached on every round, whatever the cost.
+  B. Limit retries to a small number (for example two), then route the document to human review with the document, the attempts, and the errors attached.
+  C. Drop documents that fail validation twice, to keep the pipeline moving.
+  D. After the final failure, fill the failing fields with defaults and accept the record.
+KEY: B
+WHY: Retry with error feedback works for format and structural errors but is ineffective when information is absent; failing cases should be routed for human review.
+  expl A [no]: If the information is absent or the problem structural, more rounds don't help.
+  expl B [OK]: Correct. Bounded retries plus escalation prevent endless loops.
+  expl C [no]: Dropping documents loses data without a record.
+  expl D [no]: Defaults hide the problem and introduce incorrect data.
+
+=== P5-Q52 | S6 | D4 | task 4.5 | I | select 1 ===
+STEM: A team wants to use the Message Batches API for 20,000 documents, but their current extraction flow calls a vendor lookup tool in the middle of each request and continues with the result. What is the correct adaptation?
+  A. Switch the whole job to the synchronous API since any tool use rules out batch processing.
+  B. Embed the entire vendor database in each request to avoid needing a lookup.
+  C. Submit the batch as is, and expect each request to call the lookup tool, receive the vendor data, and continue its extraction in the very same request, as it does today in the synchronous flow.
+  D. Restructure to a single-turn extraction per batch request, and do vendor lookups in pipeline code before or after the batch, since batch requests can't run tools mid-request.
+KEY: D
+WHY: The Batches API does not support multi-turn tool calling within a single request; restructure so that tool-dependent steps happen outside the batch.
+  expl A [no]: Single-turn structured extraction is fine in batch; only mid-request tool loops are a problem.
+  expl B [no]: That inflates every request's size and cost.
+  expl C [no]: Batch requests can't execute tools mid-request and return results.
+  expl D [OK]: Correct. Batches don't support multi-turn tool calling within a request.
+
+=== P5-Q53 | S6 | D4 | task 4.3 | I | select 1 ===
+STEM: Prices in documents like '1,299.99' are extracted into a floating-point field. Totals computed later sometimes differ by a cent from the invoice's printed total. What schema design best protects monetary precision?
+  A. Store amounts as free text and let each downstream consumer parse them as it prefers.
+  B. Keep floats but tell the model in the prompt instructions to round every value to two decimals before it fills in the field, so the cents are right.
+  C. Represent amounts as integers in minor currency units, or as decimal strings, with a separate currency code, and do arithmetic in decimal types.
+  D. Use floats but multiply by 1.0001 to offset the observed difference.
+KEY: C
+WHY: Schema design should avoid representations that lose precision for monetary values and include explicit currency information; semantic checks still apply.
+  expl A [no]: Inconsistent parsing causes new discrepancies.
+  expl B [no]: Rounding instructions don't remove floating-point arithmetic errors.
+  expl C [OK]: Correct. Avoiding binary floating point preserves exact values.
+  expl D [no]: An arbitrary correction factor is wrong.
+
+=== P5-Q54 | S6 | D4 | task 4.5 | I | select 1 ===
+STEM: A batch of 100 documents returns 12 failures: 3 exceeded context limits, and 9 returned output that failed schema validation. What is the best next step?
+  A. Switch all 100 documents to the synchronous API and retry them one at a time.
+  B. Using custom_id, chunk the 3 oversized documents and resubmit them, and refine the prompt for the 9 validation failures, resubmitting only those.
+  C. Resubmit all 100 documents unchanged in a new batch and hope that the failures were transient, since the previous run may have hit temporary limits.
+  D. Resubmit only the 3 oversized documents and discard the 9 validation failures as noise.
+KEY: B
+WHY: Handle batch failures by resubmitting only failed documents identified by custom_id, with modifications such as chunking oversized documents or refining prompts.
+  expl A [no]: That gives up batch savings and doesn't address the causes.
+  expl B [OK]: Correct. Each failure group gets the fix that matches its cause.
+  expl C [no]: The failures have deterministic causes and the 88 successes are already done.
+  expl D [no]: Discarding validation failures loses data.
+
+=== P5-Q55 | S6 | D4 | task 4.4 | C | select 1 ===
+STEM: Which extraction design best detects inconsistent numbers and inconsistent source data and sends the right records to review?
+  A. Extract only the stated total and trust it, because documents are generally correct and a second total only adds confusion for reviewers downstream.
+  B. Ask the model to say 'I am confident' or 'I am not confident' at the end of its response.
+  C. Extract only the calculated total from line items and discard the stated total.
+  D. Extract stated_total and calculated_total, add a conflict_detected boolean when the source itself disagrees, and route flagged records to review.
+KEY: D
+WHY: Self-correction flows extract calculated_total alongside stated_total to flag discrepancies, and add conflict_detected booleans for inconsistent source data.
+  expl A [no]: Inconsistencies would go undetected.
+  expl B [no]: A confidence statement doesn't identify specific inconsistencies.
+  expl C [no]: Discarding the stated total hides document discrepancies.
+  expl D [OK]: Correct. It captures both numeric discrepancies and source-level conflicts.
+
+=== P5-Q56 | S6 | D5 | task 5.6 | C | select 1 ===
+STEM: A customer profile is built by merging fields from three documents (contract, invoice, onboarding form). Reviewers can't tell which document supplied each field, or when two documents disagreed. What is the best design?
+  A. Store each field with its source document, location, excerpt, and date, and annotate conflicts with the competing values and sources instead of silently picking one.
+  B. Keep the most recently dated value for every field and discard the others, so that the profile stays clean and reviewers see only one value per field, which is also the simplest design.
+  C. Have the model write a paragraph summarizing the profile, with sources named in passing.
+  D. Add a single note listing all three documents as sources for the whole profile.
+KEY: A
+WHY: Preserve structured claim-source mappings through merging, annotate conflicts with source attribution, and include dates.
+  expl A [OK]: Correct. Provenance and conflict annotation enable review and trust.
+  expl B [no]: Silently discarding values hides disagreements.
+  expl C [no]: Prose loses structured traceability.
+  expl D [no]: A document list doesn't map fields to sources.
+
+=== P5-Q57 | S6 | D5 | task 5.6 | I | select 2 ===
+STEM: An analyst report built from extracted data includes quarterly financial figures, a set of news developments, and a list of technical findings about system performance. Select the TWO formatting choices that best suit the content types.
+  A. Present the quarterly financial figures as a table.
+  B. Present the news developments as a table with one cell per sentence.
+  C. Present the technical findings as a structured list with their sources.
+  D. Render all content as one uniform bulleted list for consistency.
+  E. Convert the financial figures into a flowing narrative paragraph to make the report more engaging.
+KEY: AC
+WHY: Render different content types appropriately in synthesis outputs: financial data as tables, news as prose, technical findings as structured lists.
+  expl A [OK]: Correct. Numeric comparisons are clearest in tables.
+  expl B [no]: News is narrative and suits prose.
+  expl C [OK]: Correct. Discrete findings suit structured lists.
+  expl D [no]: Uniform formatting obscures differences between content types.
+  expl E [no]: Numbers in prose are harder to compare.
+
+=== P5-Q58 | S6 | D5 | task 5.5 | F | select 1 ===
+STEM: Why sample high-confidence extractions at random for human review when you already review all low-confidence ones?
+  A. To measure the real error rate among records that the system trusts and to detect new error patterns that confidence scores do not reveal.
+  B. To give reviewers more work so that their skills stay sharp and the review team keeps a steady workload throughout the year, which management prefers.
+  C. To confirm that the model's confidence scores are exactly 1.0 for all accepted records.
+  D. To avoid having to calibrate confidence thresholds on a labeled set.
+KEY: A
+WHY: Stratified random sampling of high-confidence extractions measures ongoing error rates and detects novel error patterns.
+  expl A [OK]: Correct. Stratified random sampling supports measurement and discovery.
+  expl B [no]: Sampling is for measurement, not workload.
+  expl C [no]: Confidence scores don't need to be 1.0 for acceptance.
+  expl D [no]: Calibration is still needed. Sampling complements it.
+
+=== P5-Q59 | S6 | D5 | task 5.3 | I | select 1 ===
+STEM: In a nightly run, 8 of 100 extracted records are rejected by the downstream system for various reasons. The pipeline currently rolls back all 100 and reports a generic failure. What is the better behavior?
+  A. Commit the 92 valid records, report the 8 failures with their reasons for correction or review, and keep the rest of the run's results.
+  B. Commit the 92 and silently drop the 8 so the run appears to succeed.
+  C. Keep rolling back all 100 so the downstream system is always consistent with a single run.
+  D. Retry the whole run of 100 repeatedly until all pass.
+KEY: A
+WHY: Avoid both silent suppression and terminating entire workflows on single failures; return partial results with structured failure details.
+  expl A [OK]: Correct. Partial success with explicit failure reporting preserves value and visibility.
+  expl B [no]: Silent drops lose data and hide problems.
+  expl C [no]: This discards 92 good records for the sake of 8.
+  expl D [no]: Records with deterministic problems will never pass.
+
+=== P5-Q60 | S6 | D5 | task 5.5 | C | select 1 ===
+STEM: An extraction returns total = $4,200 with field confidence 0.97, but the document contains two different totals ($4,200 and $4,020) and conflict_detected is true. The routing rule auto-accepts anything above 0.95 confidence. What should the routing logic do?
+  A. Auto-accept it, since 0.97 exceeds the threshold and thresholds are the agreed rule.
+  B. Route it to human review because contradictory source data warrants review regardless of the confidence score.
+  C. Reject it permanently because documents with conflicting totals are invalid.
+  D. Auto-accept it but lower the confidence to 0.90 so that dashboards show uncertainty.
+KEY: B
+WHY: Extractions with ambiguous or contradictory source documents should be routed to human review, in addition to low model confidence.
+  expl A [no]: The rule fails to account for the conflict flag.
+  expl B [OK]: Correct. Confidence does not resolve a conflict in the source.
+  expl C [no]: A human can often resolve the conflict, so rejection discards recoverable data.
+  expl D [no]: Adjusting a number doesn't resolve the conflict.
